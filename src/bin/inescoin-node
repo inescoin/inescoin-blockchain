@@ -1,0 +1,194 @@
+#!/usr/bin/env php
+<?php
+
+// Copyright 2019 The Inescoin developers.
+// - Mounir R'Quiba
+// Licensed under the GNU Affero General Public License, version 3.
+
+require __DIR__.'/../../vendor/autoload.php';
+
+use React\EventLoop\Factory;
+use React\Http\Server as HttpServer;
+use React\Socket\Server as SocketServer;
+use React\Socket\SecureServer;
+
+use React\Socket\Connector;
+
+use Inescoin\Node;
+use Inescoin\Miner;
+use Inescoin\Blockchain;
+use Inescoin\Block;
+use Inescoin\RPC\RpcServer;
+use Inescoin\PKI;
+use Inescoin\ZeroPrefix;
+
+use Sikei\React\Http\Middleware\CorsMiddleware;
+
+require './src/core/Block.php';
+require './src/core/Blockchain.php';
+require './src/core/PKI.php';
+require './src/core/Wallet.php';
+require './src/core/Transaction.php';
+require './src/core/Pow.php';
+require './src/core/ZeroPrefix.php';
+// require './src/core/JsonResponse.php';
+
+require './src/core/Node.php';
+require './src/core/RPC/RpcServer.php';
+
+require './src/core/Miner.php';
+
+require './src/core/Node/P2pServer.php';
+require './src/core/Node/Packet.php';
+require './src/core/Node/Peer.php';
+
+$params = getopt('', [
+	'rpc-bind-ip::',
+	'rpc-bind-port::',
+	'p2p-bind-ip::',
+	'p2p-bind-port::',
+	'data-folder::',
+	'prefix::',
+	'network::'
+]);
+
+
+$rpcBindIp 		= $params['rpc-bind-ip'] ?? '0.0.0.0' ;
+$rpcBindPort 	= $params['rpc-bind-port'] ?? 8086;
+$p2pBindIp 		= $params['p2p-bind-ip'] ?? '0.0.0.0';
+$p2pBindPort 	= (int) $params['p2p-bind-port'] ?? 3030;
+$dataFolder 	= $params['data-folder'] ?? '../data/blockchain/';
+$prefix 		= $params['prefix'] ?? '';
+$network 		= $params['network'] ?? 'MAINNET';
+
+$sslActived 	= $params['ssl'] ?? false;
+// Usage :
+// bin/inescoin-node --data-folder=../dataMel/blockchain/ --rpc-bind-port=8087 --p2p-bind-port=3031 --network=MAINNET --prefix=bob
+// bin/inescoin-node --data-folder=../dataMel/blockchain/ --rpc-bind-port=8086 --p2p-bind-port=3030 --network=MAINNET --prefix=alice
+// bin/inescoin-node --data-folder=../dataMel/blockchain/ --rpc-bind-port=8088 --p2p-bind-port=3032 --network=MAINNET --prefix=moon
+// bin/inescoin-node --data-folder=../dataMel/blockchain/ --rpc-bind-port=8089 --p2p-bind-port=3033 --network=MAINNET --prefix=victor
+//
+//
+// Remote
+// /opt/src/bin/inescoin-node --data-folder=../dataMel/blockchain/ --rpc-bind-port=8087 --p2p-bind-port=3031 --network=MAINNET --prefix=bob --rpc-bind-ip=68.183.195.6 --p2p-bind-ip=68.183.195.6
+//
+// /opt/src/bin/inescoin-node --data-folder=../dataMel/blockchain/ --rpc-bind-port=8087 --p2p-bind-port=3031 --network=MAINNET --prefix=bob --rpc-bind-ip=88.174.137.8 --p2p-bind-ip=88.174.137.8
+//
+// /opt/src/bin/inescoin-node --data-folder=../dataMel/blockchain/ --rpc-bind-port=8087 --p2p-bind-port=3031 --network=MAINNET --prefix=bob --rpc-bind-ip=165.22.230.188 --p2p-bind-ip=165.22.230.188
+//
+//
+//
+// Miner
+// bin/inescoin-miner --wallet-address=0x5967a4016501465CD951a1e3984F772AfDeB5207 --rpc-port=8087 --rpc-ip=http://165.22.38.106
+//
+// Kibana
+// http://localhost:5608
+//
+// RPC API
+//
+// 	[GET]
+// 	- http://localhost:8087/blocks
+// 	- http://localhost:8087/top-height
+// 	- http://localhost:8087/messages
+// 	- http://localhost:8087/mempool
+// 	- http://localhost:8087/peers
+// 	- http://localhost:8087/public-key
+// 	- http://localhost:8087/generate-keys
+// 	- http://localhost:8087/generate-keys-test
+// 	- http://localhost:8087/generate-certificat
+//
+// 	[POST]
+// 	- http://localhost:8087/mine
+// 	- http://localhost:8087/mempool
+// 	- http://localhost:8087/z42
+// 	- http://localhost:8087/message
+// 	- http://localhost:8087/transaction
+
+
+// Push to server
+// cp -rp /Users/moon/workspace/webWallet/blockchain/composer.json /Users/moon/workspace/inescoin/blockchain-dev/; \
+// 	cp -rp /Users/moon/workspace/webWallet/blockchain/src/* /Users/moon/workspace/inescoin/blockchain-dev/src/; \
+// 	cp -rp /Users/moon/workspace/webWallet/blockchain/messenger/*.js* /Users/moon/workspace/inescoin/blockchain-dev/messenger/; \
+// 	cd /Users/moon/workspace/inescoin/blockchain-dev/; \
+// 	git add .; \
+// 	git commit -m 'up'; \
+// 	git push; \
+// 	cd /Users/moon/workspace/webWallet/blockchain/src/; \
+// 	git add .; \
+// 	git commit -m 'up'; \
+// 	git push
+//
+//
+//
+$peersConfig = [
+	[
+		'host' => '198.199.73.197',
+		'port' => 3031
+	],
+];
+
+
+$localPeerConfig = [
+	'host' => $p2pBindIp,
+	'port' => $p2pBindPort
+];
+
+$loop = Factory::create();
+
+$connector = new Connector($loop, [
+	'tcp' => array(
+        'bindto' => '192.168.0.1:0'
+    ),
+	'tls' => [
+        'verify_peer' => false,
+        'verify_peer_name' => false
+    ],
+]);
+
+$p2pServer =  new Node\P2pServer($connector, $network);
+
+$inesCoin = new Blockchain($dataFolder, $prefix);
+
+$node = new Node(
+    new Miner($inesCoin, new ZeroPrefix()),
+    $p2pServer
+);
+
+$p2pServer->attachNode($node, $peersConfig, $localPeerConfig);
+
+$settings = [
+    'allow_credentials' => true,
+    'allow_origin'      => ['*'],
+    'allow_methods'     => ['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'OPTIONS'],
+    'allow_headers'     => ['DNT','X-Custom-Header','Keep-Alive','User-Agent','X-Requested-With','If-Modified-Since','Cache-Control','Content-Type','Content-Range','Range'],
+    'expose_headers'    => ['DNT','X-Custom-Header','Keep-Alive','User-Agent','X-Requested-With','If-Modified-Since','Cache-Control','Content-Type','Content-Range','Range'],
+    'max_age'           => 60 * 60 * 24 * 20, // preflight request is valid for 20 days
+];
+
+$socketP2pServer = new SocketServer($p2pBindIp . ':' . $p2pBindPort, $loop);
+$socketP2pServer->on('connection', $p2pServer);
+
+$webServer = new RpcServer($node);
+$httpserver = new HttpServer([
+	new CorsMiddleware($settings),
+	$webServer
+]);
+
+$socketHttp = new SocketServer($rpcBindIp . ':' . $rpcBindPort, $loop);
+if ($sslActived) {
+	$socketHttp = new SecureServer($socketHttp, $loop, array(
+	    'local_cert' => __DIR__ . '/../' . PKI::generateCertificat(),
+	    'local_pk' => __DIR__ . '/../' . 'blockchain.key',
+	    'allow_self_signed' => true,
+	    'verify_peer' => false
+	));
+}
+
+$httpserver->listen($socketHttp);
+
+echo sprintf("Data folder: %s\n", $dataFolder);
+
+echo sprintf("[$network] Web server running at " . (($sslActived) ? 'https' : 'http' ). "://%s:%s\n", $rpcBindIp, $rpcBindPort);
+echo sprintf("[$network] P2p server running at " . (($sslActived) ? 'tls' : 'tcp' . "://%s:%s\n"), $p2pBindIp, $p2pBindPort);
+
+$loop->run();

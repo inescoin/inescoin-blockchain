@@ -1,0 +1,11 @@
+{
+    "name": "inescoin-chat-server",
+    "version": "0.1.0",
+    "dependencies": {
+        "ent": "~0.1.0",
+        "express": "~3.3.4",
+        "lodash": "^4.17.15",
+        "socket.io": "~1.2.1"
+    },
+    "description": "Chat server for InesCoin"
+}

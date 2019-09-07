@@ -1,0 +1,92 @@
+version: '3'
+
+services:
+    blockchain:
+        container_name: blockchain
+        hostname: blockchain
+        restart: always
+        build:
+          context: .
+        volumes:
+            - ./:/opt
+        ports:
+            - "8087:8087"
+            - "8088:8088"
+            - "8086:8086"
+            - "3030:3030"
+            - "3031:3031"
+            - "8180:8180"
+        stdin_open: true
+        expose:
+          - "3031"
+          - "3030"
+          - "8087"
+          - "8088"
+          - "8086"
+          - "8180"
+        command: bash /opt/run.sh
+        networks:
+          - overlay
+    blockchain_messenger:
+        container_name: inescoin-messenger
+        build: ../inescoin-messenger/
+        hostname: inescoin-messenger
+        restart: always
+        build:
+          context: ../inescoin-messenger/
+        volumes:
+            - ../inescoin-messenger/:/opt
+        ports:
+            - "4200:4200"
+        stdin_open: true
+        expose:
+          - "4200"
+          - "8180"
+        command: bash /opt/run.sh
+    blockchain_nginx:
+        build: ../inescoin-explorer/services/nginx
+        container_name: inescoin-explorer-nginx
+        restart: always
+        working_dir: /www
+        volumes:
+            - ../inescoin-explorer/:/www
+        ports:
+          - "8000:80"
+        networks:
+          - overlay
+    phpfpm:
+        build: ../inescoin-explorer/services/phpfpm
+        container_name: inescoin-explorer-phpfpm
+        hostname: phpfpm
+        restart: always
+        working_dir: /www
+        volumes:
+            - ../inescoin-explorer/:/www
+        # command: bash /www/services/phpfpm/phpfpm.sh
+        networks:
+          - overlay
+    elasticsearch:
+        container_name: elasticsearch
+        image: docker.elastic.co/elasticsearch/elasticsearch:7.0.1
+        volumes:
+          - esdata:/usr/share/elasticsearch/data
+        environment:
+          - bootstrap.memory_lock=true
+          - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+          - discovery.type=single-node
+        ports:
+          - "9308:9300"
+          - "9208:9200"
+        networks:
+          - overlay
+    kibana:
+      container_name: kibana
+      image: docker.elastic.co/kibana/kibana:7.0.1
+      ports:
+        - "5608:5601"
+      networks:
+            - overlay
+volumes:
+  esdata:
+networks:
+    overlay:
