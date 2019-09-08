@@ -269,7 +269,7 @@ class ESBlockService extends ESService
 
 			}
 
-			if (!empty($blocksList)) {
+			if (!empty($blocksList) && $resetMode) {
 				$this->bulkIndex($blocksList);
 				$blocksList = [];
 			}
@@ -295,7 +295,7 @@ class ESBlockService extends ESService
 				}
 
 				if ($amount) {
-					var_dump('[ESBlockService] [bulkBlocks] +Decrement amount | Address: ' . $address . ' | Amount: ' . $amount . ' | Height: ' . $height . ' | Hash: ' . $hash);
+					var_dump('[ESBlockService] [bulkBlocks] --Decrement amount | Address: ' . $address . ' | Amount: -' . $amount . ' | Height: ' . $height . ' | Hash: ' . $hash);
 					$this->bankService->decrementAmount($address, $amount, $height, $hash);
 				}
 			}
@@ -311,7 +311,7 @@ class ESBlockService extends ESService
 				}
 
 				if ($amount) {
-					var_dump('[ESBlockService] [bulkBlocks] -Increment amount | Address: ' . $address . ' | Amount: ' . $amount . ' | Height: ' . $height . ' | Hash: ' . $hash);
+					var_dump('[ESBlockService] [bulkBlocks] ++Increment amount | Address: ' . $address . ' | Amount: +' . $amount . ' | Height: ' . $height . ' | Hash: ' . $hash);
 					$this->bankService->incrementAmount($address, $amount, $height, $hash);
 				}
 			}

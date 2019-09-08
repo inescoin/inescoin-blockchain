@@ -140,6 +140,10 @@ class P2pServer
             if (isset($this->peersPersistence[$connection->getRemoteAddress()])) {
                 unset($this->peersPersistence[$connection->getRemoteAddress()]);
             }
+
+            if (count($this->peers) + count($this->peersPersistence) == 0) {
+                $this->restartNode();
+            }
         });
     }
 
@@ -162,6 +166,19 @@ class P2pServer
 
         foreach ($peersConfig as $peer) {
             if ($localPeerConfig['host'] !== $peer['host'] || $localPeerConfig['port'] !== $peer['port']) {
+                $this->node->connect($peer['host'], (int) $peer['port']);
+            }
+        }
+    }
+
+
+    public function restartNode(): void
+    {
+
+        $remoteAddresses = $this->node->getBlockchain()->es->peerService()->getRemoteAddresses();
+
+        foreach ($remoteAddresses as $peer) {
+            if ($this->localPeerConfig['host'] !== $peer['host'] || $this->localPeerConfig['port'] !== $peer['port']) {
                 $this->node->connect($peer['host'], (int) $peer['port']);
             }
         }
@@ -507,6 +524,11 @@ class P2pServer
                 $this->peers[$remoteAddress]->setPublicKey($peerInfo['publicKey']);
                 $this->peers[$remoteAddress]->setLocalConfig($peerInfo['localPeerConfig']['host'] . ':' . $peerInfo['localPeerConfig']['port']);
             }
+        }
+
+        if (!array_key_exists('height', $peerInfo)) {
+            $connection->close();
+            return;
         }
 
         $blockHeight = (int) $peerInfo['height'] + 1;

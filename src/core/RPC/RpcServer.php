@@ -19,7 +19,7 @@ final class RpcServer
     public function __construct(Node $node)
     {
         $this->node = $node;
-        $this->cache = Cache::getInstance();
+        $this->cache = Cache::getInstance($this->node->getBlockchain()->getPrefix());
     }
 
     public function __invoke(ServerRequestInterface $request): Response

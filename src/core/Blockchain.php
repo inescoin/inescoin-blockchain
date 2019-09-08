@@ -71,8 +71,8 @@ class Blockchain {
         // Check if blockchain exists
         $this->createGenesisBlock();
 
-        // if(!$this->resetBank()) {
-        if(!$this->scanFromZero(true, true)) {
+        if(!$this->resetBank()) {
+        // if(!$this->scanFromZero(true, true)) {
             $this->logger->error("Init: Invalid blockchain, you need to resync from 0, please delete your blockchain folder: " . $blockDirectory);
             die();
         }
@@ -165,10 +165,10 @@ class Blockchain {
         ];
     }
 
-    private function createGenesisBlock($resetMode = false)
+    private function createGenesisBlock()
     {
         $block = Block::generateGenesisBlock($this->prefix);
-        $this->saveBlockToDB($block, $resetMode);
+        $this->saveBlockToDB($block);
         return $block;
     }
 
@@ -472,21 +472,19 @@ class Blockchain {
         return true;
     }
 
-    private function saveBlockToDB($block, $resetMode = false)
+    private function saveBlockToDB($block)
     {
 
-        $this->saveBlocksToDB([$block], $resetMode);
-        // $this->es->blockService()->index($block->getHeight(), $block->getInfos());
+        $this->es->blockService()->index($block->getHeight(), $block->getInfos());
         return true;
     }
 
     public function resetBank()
     {
+
         $this->es->bankService()->reset()->initIndex();
         $this->es->transferService()->reset()->initIndex();
         $this->es->transactionService()->reset()->initIndex();
-
-        $this->createGenesisBlock(true);
 
         return $this->scanFromZero(true, true);
     }
@@ -509,7 +507,7 @@ class Blockchain {
             $this->setTopKnowHeight($topBlockHeight);
         }
 
-        $toBlockHeight = $fromBlockHeight + $range;
+        $toBlockHeight = $fromBlockHeight + $range - 1;
         if ($toBlockHeight > $topBlockHeight) {
             $toBlockHeight = $topBlockHeight;
         }
@@ -542,7 +540,7 @@ class Blockchain {
                 $previousBlock = $block;
             }
 
-            $fromBlockHeight = $toBlockHeight;
+            $fromBlockHeight = $toBlockHeight + 1;
             $toBlockHeight = $toBlockHeight + $range;
             if ($toBlockHeight > $topBlockHeight) {
                 $toBlockHeight = $topBlockHeight;
@@ -551,6 +549,7 @@ class Blockchain {
             if ($resetMode) {
                 $this->saveBlocksToDB($blocks, true);
             }
+
         }
 
         return true;

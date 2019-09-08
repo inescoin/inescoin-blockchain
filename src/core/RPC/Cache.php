@@ -18,9 +18,9 @@ class Cache {
 
 	public $cacheTimeout = 10;
 
-	public function __construct($name = BlockchainConfig::NAME)
+	public function __construct($prefix = 'bob')
 	{
-		$this->cacheFolder = $this->cacheFolder . $name . '/';
+		$this->cacheFolder = $this->cacheFolder . BlockchainConfig::NAME . '/' . $prefix . '/';
 	}
 
 	static function getInstance($name = BlockchainConfig::NAME) {
