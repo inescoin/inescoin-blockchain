@@ -79,6 +79,18 @@ class ESBlockchainProvider {
 
 	}
 
+	public function resetAll() {
+		$this->blockService->reset();
+		$this->transactionService->reset();
+		$this->transactionPoolService->reset();
+		$this->messageService->reset();
+		$this->messagePoolService->reset();
+		// $this->peerService->reset();
+		$this->bankService->reset();
+		$this->transferService->reset();
+		$this->transferPoolService->reset();
+	}
+
 	public static function getInstance($prefix = '')
 	{
 		if (null === self::$esBlockchainProviderInstance) {
@@ -87,4 +99,6 @@ class ESBlockchainProvider {
 
 		return self::$esBlockchainProviderInstance;
 	}
+
+
 }

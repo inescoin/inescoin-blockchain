@@ -269,7 +269,7 @@ class ESBlockService extends ESService
 
 			}
 
-			if (!empty($blocksList) && $resetMode) {
+			if (!empty($blocksList)) {
 				$this->bulkIndex($blocksList);
 				$blocksList = [];
 			}

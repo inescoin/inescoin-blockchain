@@ -142,7 +142,7 @@ class P2pServer
             }
 
             if (count($this->peers) + count($this->peersPersistence) == 0) {
-                $this->restartNode();
+                //$this->restartNode();
             }
         });
     }

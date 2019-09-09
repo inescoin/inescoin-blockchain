@@ -69,7 +69,6 @@ class Blockchain {
         $this->es = ESBlockchainProvider::getInstance($prefix);
 
         // Check if blockchain exists
-        $this->createGenesisBlock();
 
         if(!$this->resetBank()) {
         // if(!$this->scanFromZero(true, true)) {
@@ -397,7 +396,9 @@ class Blockchain {
             return false;
         }
 
-        if ($firstBlock->getHeight() < $previousBlock->getHeight()) {
+        var_dump($firstBlock->getHeight());
+
+        if ($previousBlock && $firstBlock->getHeight() < $previousBlock->getHeight()) {
             return true;
         }
 
@@ -474,17 +475,17 @@ class Blockchain {
 
     private function saveBlockToDB($block)
     {
-
         $this->es->blockService()->index($block->getHeight(), $block->getInfos());
         return true;
     }
 
     public function resetBank()
     {
-
         $this->es->bankService()->reset()->initIndex();
         $this->es->transferService()->reset()->initIndex();
         $this->es->transactionService()->reset()->initIndex();
+
+        $this->createGenesisBlock();
 
         return $this->scanFromZero(true, true);
     }
@@ -496,9 +497,11 @@ class Blockchain {
         $lastBlock = $this->getLastBlock();
 
         if (null === $lastBlock) {
+            var_dump('[Blockchain] Last block is null');
             return true;
         }
 
+        var_dump('[Blockchain] Start Scan... 1');
         $range = 100;
         $fromBlockHeight = 0;
         $topBlockHeight = $lastBlock->getHeight();
@@ -507,7 +510,7 @@ class Blockchain {
             $this->setTopKnowHeight($topBlockHeight);
         }
 
-        $toBlockHeight = $fromBlockHeight + $range - 1;
+        $toBlockHeight = $fromBlockHeight + $range;
         if ($toBlockHeight > $topBlockHeight) {
             $toBlockHeight = $topBlockHeight;
         }
@@ -525,10 +528,12 @@ class Blockchain {
             foreach ($blocks as $block) {
                 if (null !== $previousBlock) {
                     if ($previousBlock->getHeight() === $block->getHeight()) {
+                        var_dump('[Blockchain] $previousBlock->getHeight === $block->getHeight');
                         continue;
                     }
 
                     if (!$previousBlock->isNextValid($block)) {
+                        var_dump('[Blockchain] [error] $previousBlock->isNextValid');
                         return false;
                     }
                 }
@@ -540,7 +545,7 @@ class Blockchain {
                 $previousBlock = $block;
             }
 
-            $fromBlockHeight = $toBlockHeight + 1;
+            $fromBlockHeight = $toBlockHeight;
             $toBlockHeight = $toBlockHeight + $range;
             if ($toBlockHeight > $topBlockHeight) {
                 $toBlockHeight = $topBlockHeight;
