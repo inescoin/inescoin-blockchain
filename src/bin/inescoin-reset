@@ -12,10 +12,12 @@ require __DIR__.'/../../vendor/autoload.php';
 
 $params = getopt('', [
 	'prefix::',
+	'height::',
 ]);
 
 
 $prefix = $params['prefix'] ?? 'bob';
+$height = $params['height'] ?? 'height';
 
 $esService = ESBlockchainProvider::getInstance($prefix);
-$esService->resetAll();
+$esService->resetAll($height);

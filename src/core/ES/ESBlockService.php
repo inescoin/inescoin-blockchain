@@ -50,8 +50,9 @@ class ESBlockService extends ESService
 	public function bulkBlocks($blocks, $resetMode = false) {
 		$blocksList = [];
 		$transactionsList = [];
-		$transfersList = [];
+		$transferInTransaction = [];
 
+		$this->walletBank = [];
 
 		$walletBank = $this->bankService->getAddressBalances(BlockchainConfig::NAME);
 
@@ -150,7 +151,7 @@ class ESBlockService extends ESService
 					exit();
 				}
 
-				$hash = $minerTransaction['from']
+				$minerHash = Pow::hash($minerTransaction['from']
         			. (string) $block['height']
         			. $block['merkleRoot']
         			. $block['hash']
@@ -159,13 +160,13 @@ class ESBlockService extends ESService
         			. $minerTransaction['hash']
         			. (string) $minerTransfer['amount']
         			. $minerTransfer['to']
-					. (string) true;
+					. (string) true);
 
 				$addressBalanceTo[$minerAddress][] = [
 					'blockFee' => $blockFee,
 					'amount' => $minerTransfer['amount'] + $blockFee,
 					'blockHeight' => $block['height'],
-					'hash' => Pow::hash($hash)
+					'hash' => $minerHash
 				];
 
 				// Miner Reward
@@ -181,6 +182,7 @@ class ESBlockService extends ESService
 				foreach ($transactions as $transaction) {
 		            $addressFrom = $transaction['from'];
 		            if (!isset($this->walletBank[$addressFrom]) || $this->walletBank[$addressFrom]['amount'] <= 0 && BlockchainConfig::NAME !== $addressFrom) {
+	            		var_dump('Invalid amount <---------------------------------------------> amount:' . $this->walletBank[$addressFrom]['amount'] . ' | '. $block['height'] . ' |  ' . $transaction['hash'] . ' | ' . $addressFrom);
 		            	continue;
 		            }
 
@@ -215,19 +217,36 @@ class ESBlockService extends ESService
 	                	$this->walletBank[$addressFrom]['hash'] = $walletHash;
 	                	$this->walletBank[$addressFrom]['blockHeight'] = $block['height'];
 
+
 		            	if (is_string($transaction['transfers'])) {
 		            		$transfers = (array) json_decode(base64_decode($transaction['transfers']), true);
 		            	} else {
 		            		$transfers = $transaction['transfers'];
 		            	}
 
+		            	if ($block['height'] == 45712) {
+		            		var_dump($transaction['transfers']);
+	                		var_dump($transfers);
+	                	}
+
 		            	if (empty($transfers)) {
 		            		var_dump('Empty transfer <---------------------------------------------> '. $block['height'] . ' ' . $transaction['hash']);
 							break 2;
 		            	}
 
-		            	$transferInTransaction = [];
+						$transfersList = [];
 		            	foreach ($transfers as $transfer) {
+			            	if (!array_key_exists($transfer['to'], $this->walletBank)) {
+		            			$this->walletBank[$transfer['to']] = [
+									'amount' => $transaction['amount'],
+					        		'transactionHash' => $transaction['hash'],
+									'blockHeight' => $block['height'],
+					        		'hash' => ''
+								];
+		            		} else {
+		            			$this->walletBank[$transfer['to']]['amount'] += $transaction['amount'];
+		            		}
+
 		            		if (!$transactionsList[$transaction['hash']]['coinbase']) {
 				            	if (!array_key_exists($transfer['to'], $addressBalanceTo)) {
 				            		$addressBalanceTo[$transfer['to']] = [];
@@ -250,6 +269,11 @@ class ESBlockService extends ESService
 									'blockHeight' => $block['height'],
 									'hash' => $bankWalletHash
 								];
+
+								$this->walletBank[$transfer['to']]['hash'] = $bankWalletHash;
+
+		            		} else {
+								$this->walletBank[$transfer['to']]['hash'] = $minerHash;
 		            		}
 
 				            $transfersList[$transfer['hash']] = $transfer;
@@ -261,7 +285,9 @@ class ESBlockService extends ESService
 				            $transferInTransaction[$transfer['hash']] = $transfersList[$transfer['hash']];
 		            	}
 
-		            	$transactionsList[$transaction['hash']]['transfers'] = json_encode($transfersList);
+		            	$jsonTranfserList = json_encode($transfersList);
+		            	$jsonTranfserList = $jsonTranfserList ? $jsonTranfserList : (object) [];
+		            	$transactionsList[$transaction['hash']]['transfers'] = $jsonTranfserList;
 		            } else {
 						var_dump("[ESBlockService] [bulkBlocks] Invalid amount spent: address => " . $addressFrom . " | amount => " . $transaction['amount'] . " | Height => " . $block['height']);
 		            }
@@ -279,9 +305,9 @@ class ESBlockService extends ESService
 				$transactionsList = [];
 			}
 
-			if (!empty($transfersList)) {
-				$this->transferService->bulkIndex($transfersList);
-				$transfersList = [];
+			if (!empty($transferInTransaction)) {
+				$this->transferService->bulkIndex($transferInTransaction);
+				$transferInTransaction = [];
 			}
 
 			foreach ($addressBalanceFrom as $address => $trans) {

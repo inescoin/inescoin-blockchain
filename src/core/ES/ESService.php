@@ -253,6 +253,30 @@ class ESService
 		}
 	}
 
+	protected function _deleteByQuery($index, $type, $height, $key = 'height') {
+		$this->logger->info("[ESService][_deleteByQuery] Index: $index | Type: $type | Height: $height | Key: $key");
+
+		try {
+			$response = $this->client->deleteByQuery([
+			    'index' => $this->index,
+			    'type'  => $this->type,
+			    'body'  => [
+			        'query' => [
+			            "range" =>  [
+				            $key => [
+				                "gte" => $height
+				              ]
+				          ]
+				        ]
+			        ]
+			    ]);
+		} catch (\Exception $e) {
+			$response['error'] = $e->getMessage();
+			// var_dump('ERROR --> ' . $response['error']);
+		}
+		return $response;
+	}
+
 	protected function _search($index, $type, $matched = [], $size = 1000) {
 		$this->logger->info("[ESService][_search] Index: $index | Type: $type | Size: $size | Query: " . serialize($matched));
 
@@ -319,6 +343,11 @@ class ESService
 
 	public function reset() {
 		$this->_removeIndex();
+		return $this;
+	}
+
+	public function deleteByQuery($height, $key = 'height') {
+		$this->_deleteByQuery($this->index, $this->type, $height, $key = 'height');
 		return $this;
 	}
 
