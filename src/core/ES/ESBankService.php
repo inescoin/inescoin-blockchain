@@ -102,6 +102,10 @@ class ESBankService extends ESService
 				$sourceAddress = $address['_source']['address'];
 				$out[$sourceAddress] = $address['_source'];
 				$out[$sourceAddress]['amount'] = $out[$sourceAddress]['amount'] * 1000000000;
+
+				if ($address['_source']['address'] !== BlockchainConfig::NAME && $out[$sourceAddress]['amount'] < 0) {
+					$out[$sourceAddress]['amount'] = 0;
+				}
 			}
 		}
 
@@ -130,6 +134,10 @@ class ESBankService extends ESService
 		if (isset($response['_source'])) {
 			$infos = (array) $response['_source'];
 			$infos['amount'] = $infos['amount'] * 1000000000;
+
+			if ($infos['address'] !== BlockchainConfig::NAME && $infos['amount'] < 0) {
+				$infos['amount'] = 0;
+			}
 		} else {
 			return [
 				'error' => 'NOT FOUND'
