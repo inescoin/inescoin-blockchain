@@ -28,14 +28,14 @@ services:
         networks:
           - overlay
     blockchain_messenger:
-        container_name: inescoin-messenger
-        build: ../inescoin-messenger/
-        hostname: inescoin-messenger
+        container_name: inescoin-wallet
+        build: ../inescoin-wallet/
+        hostname: inescoin-wallet
         restart: always
         build:
-          context: ../inescoin-messenger/
+          context: ../inescoin-wallet/
         volumes:
-            - ../inescoin-messenger/:/opt
+            - ../inescoin-wallet/:/opt
         ports:
             - "4200:4200"
         stdin_open: true
