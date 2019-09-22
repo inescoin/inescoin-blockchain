@@ -428,7 +428,7 @@ class Blockchain {
         $this->clearMemoryPool();
 
         $endTime = microtime(true);
-        $execTime = ($endTime - $startTime) / 1000;
+        $execTime = $endTime - $startTime;
         $nbBlocks = count($blocks);
         var_dump('[Blockchain] [buldAdd] ' . $nbBlocks . ' blocks added in ' . $execTime .' sec');
 

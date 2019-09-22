@@ -129,7 +129,7 @@ class ESBlockService extends ESService
 						if ($block['height'] !== 0 && $this->walletBank[BlockchainConfig::NAME]['hash'] !== $transaction['bankHash']) {
 							var_dump('Bank Hash ERROR <---------------------------------------------> '. $block['height']);
 							var_dump('------------------  ' . $this->walletBank[BlockchainConfig::NAME]['hash'] .' <=> ' . $transaction['bankHash'] . ' ------------------');
-							// break 2;
+							break 2;
 							// exit();
 						}
 

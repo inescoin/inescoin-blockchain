@@ -1,0 +1,23 @@
+#!/usr/bin/env php
+<?php
+
+// Copyright 2019 The Inescoin developers.
+// - Mounir R'Quiba
+// Licensed under the GNU Affero General Public License, version 3.
+
+use Inescoin\Backup;
+
+require __DIR__.'/../../vendor/autoload.php';
+
+
+$params = getopt('', [
+	'prefix::',
+    'file::',
+	'force::',
+]);
+
+$prefix = $params['prefix'] ?? 'moon';
+$force = $params['force'] ?? false;
+$fileName = $params['file'] ?? './inescoin';
+
+(new Backup($prefix, $fileName, $force))->export();
