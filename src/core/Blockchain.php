@@ -263,6 +263,21 @@ class Blockchain {
 
         $data = (array) $data;
 
+
+        $wallet = $this->getAddressBalances([$data['from'], $data['to']]);
+
+        if (!isset($wallet[$data['from']])) {
+            return [
+                'error' => 'Wallet address sender not found'
+            ];
+        }
+
+         if (!isset($wallet[$data['to']])) {
+            return [
+                'error' => 'Wallet address receiver not found'
+            ];
+        }
+
         $message = new Message();
         $message->setData($data);
 
