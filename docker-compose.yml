@@ -1,9 +1,9 @@
 version: '3'
 
 services:
-    blockchain:
-        container_name: blockchain
-        hostname: blockchain
+    inescoin_node:
+        container_name: inescoin-node
+        hostname: inescoin-node
         restart: always
         build:
           context: .
@@ -27,7 +27,7 @@ services:
         command: bash /opt/run.sh
         networks:
           - overlay
-    blockchain_messenger:
+    inescoin_messenger:
         container_name: inescoin-wallet
         build: ../inescoin-wallet/
         hostname: inescoin-wallet
@@ -43,7 +43,7 @@ services:
           - "4200"
           - "8180"
         command: bash /opt/run.sh
-    blockchain_nginx:
+    inescoin_explorer_nginx:
         build: ../inescoin-explorer/services/nginx
         container_name: inescoin-explorer-nginx
         restart: always
@@ -54,7 +54,7 @@ services:
           - "8000:80"
         networks:
           - overlay
-    phpfpm:
+    inescoin_explorer_phpfpm:
         build: ../inescoin-explorer/services/phpfpm
         container_name: inescoin-explorer-phpfpm
         hostname: phpfpm

@@ -85,6 +85,23 @@ final class Node
         return $transaction;
     }
 
+    public function checkFromMemoryPool($data) {
+        $response = $this->_checkFrom($data);
+
+        if (isset($response['broadcasted']) && isset($response['data'])) {
+            $pushed = $this->pushMemoryPool($response['data']);
+            if (!isset($pushed['error'])) {
+                return [$pushed];
+            } else {
+                return $pushed;
+            }
+        }
+
+        return [
+            'error' => 'invalid public key check'
+        ];
+    }
+
     public function pushMemoryMessagePool($data)
     {
         var_dump('[pushMemoryMessagePool] broadcast start...');
@@ -107,43 +124,6 @@ final class Node
         }
 
         return $response;
-    }
-
-    // public function checkFromMetadataPool($data) {
-    //     $response = $this->_checkFrom($data);
-
-    //     if (isset($response['broadcasted']) && isset($response['data'])) {
-    //         $this->pushMemoryMessagePool($response['data']);
-    //     }
-
-    //     return $response;
-    // }
-
-    // public function checkFromDataPool($data) {
-    //     $response = $this->_checkFrom($data);
-
-    //     if (isset($response['broadcasted']) && isset($response['data'])) {
-    //         $this->pushMemoryMessagePool($response['data']);
-    //     }
-
-    //     return $response;
-    // }
-
-    public function checkFromMemoryPool($data) {
-        $response = $this->_checkFrom($data);
-
-        if (isset($response['broadcasted']) && isset($response['data'])) {
-            $pushed = $this->pushMemoryPool($response['data']);
-            if (!isset($pushed['error'])) {
-                return [$pushed];
-            } else {
-                return $pushed;
-            }
-        }
-
-        return [
-            'error' => 'invalid public key check'
-        ];
     }
 
     public function getPeers(): array
