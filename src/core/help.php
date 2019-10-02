@@ -1,4 +1,3 @@
-#!/usr/bin/env php
 <?php
 
 // Copyright 2019 The Inescoin developers.
