@@ -6,6 +6,7 @@
 // Licensed under the GNU Affero General Public License, version 3.
 
 require __DIR__.'/../../vendor/autoload.php';
+require __DIR__ . '/../core/help.php';
 
 use React\EventLoop\Factory;
 use React\Http\Server as HttpServer;
@@ -21,26 +22,9 @@ use Inescoin\Block;
 use Inescoin\RPC\RpcServer;
 use Inescoin\PKI;
 use Inescoin\ZeroPrefix;
+use Inescoin\BlockchainConfig;
 
 use Sikei\React\Http\Middleware\CorsMiddleware;
-
-require './src/core/Block.php';
-require './src/core/Blockchain.php';
-require './src/core/PKI.php';
-require './src/core/Wallet.php';
-require './src/core/Transaction.php';
-require './src/core/Pow.php';
-require './src/core/ZeroPrefix.php';
-// require './src/core/JsonResponse.php';
-
-require './src/core/Node.php';
-require './src/core/RPC/RpcServer.php';
-
-require './src/core/Miner.php';
-
-require './src/core/Node/P2pServer.php';
-require './src/core/Node/Packet.php';
-require './src/core/Node/Peer.php';
 
 $params = getopt('', [
 	'rpc-bind-ip::',
@@ -49,84 +33,31 @@ $params = getopt('', [
 	'p2p-bind-port::',
 	'data-folder::',
 	'prefix::',
-	'network::'
+	'network::',
+	'help::',
 ]);
 
 
 $rpcBindIp 		= $params['rpc-bind-ip'] ?? '0.0.0.0' ;
 $rpcBindPort 	= $params['rpc-bind-port'] ?? 8086;
 $p2pBindIp 		= $params['p2p-bind-ip'] ?? '0.0.0.0';
-$p2pBindPort 	= (int) $params['p2p-bind-port'] ?? 3030;
-$dataFolder 	= $params['data-folder'] ?? '../data/blockchain/';
-$prefix 		= $params['prefix'] ?? '';
+$p2pBindPort 	= $params['p2p-bind-port'] ?? 3030;
+$dataFolder 	= $params['data-folder'] ?? './';
+$prefix 		= $params['prefix'] ?? BlockchainConfig::NAME;
 $network 		= $params['network'] ?? 'MAINNET';
-
+$helpMe 		= array_key_exists('help', $params);
 $sslActived 	= $params['ssl'] ?? false;
-// Usage :
-// bin/inescoin-node --data-folder=../dataMel/blockchain/ --rpc-bind-port=8087 --p2p-bind-port=3031 --network=MAINNET --prefix=bob
-// bin/inescoin-node --data-folder=../dataMel/blockchain/ --rpc-bind-port=8086 --p2p-bind-port=3030 --network=MAINNET --prefix=alice
-// bin/inescoin-node --data-folder=../dataMel/blockchain/ --rpc-bind-port=8088 --p2p-bind-port=3032 --network=MAINNET --prefix=moon
-// bin/inescoin-node --data-folder=../dataMel/blockchain/ --rpc-bind-port=8089 --p2p-bind-port=3033 --network=MAINNET --prefix=victor
-//
-//
-// Remote
-// /opt/src/bin/inescoin-node --data-folder=../dataMel/blockchain/ --rpc-bind-port=8087 --p2p-bind-port=3031 --network=MAINNET --prefix=bob --rpc-bind-ip=68.183.195.6 --p2p-bind-ip=68.183.195.6
-//
-// /opt/src/bin/inescoin-node --data-folder=../dataMel/blockchain/ --rpc-bind-port=8087 --p2p-bind-port=3031 --network=MAINNET --prefix=bob --rpc-bind-ip=88.174.137.8 --p2p-bind-ip=88.174.137.8
-//
-// /opt/src/bin/inescoin-node --data-folder=../dataMel/blockchain/ --rpc-bind-port=8087 --p2p-bind-port=3031 --network=MAINNET --prefix=bob --rpc-bind-ip=165.22.230.188 --p2p-bind-ip=165.22.230.188
-//
-//
-//
-// Miner
-// bin/inescoin-miner --wallet-address=0x5967a4016501465CD951a1e3984F772AfDeB5207 --rpc-port=8087 --rpc-ip=http://165.22.38.106
-//
-// Kibana
-// http://localhost:5608
-//
-// RPC API
-//
-// 	[GET]
-// 	- http://localhost:8087/blocks
-// 	- http://localhost:8087/top-height
-// 	- http://localhost:8087/messages
-// 	- http://localhost:8087/mempool
-// 	- http://localhost:8087/peers
-// 	- http://localhost:8087/public-key
-// 	- http://localhost:8087/generate-keys
-// 	- http://localhost:8087/generate-keys-test
-// 	- http://localhost:8087/generate-certificat
-//
-// 	[POST]
-// 	- http://localhost:8087/mine
-// 	- http://localhost:8087/mempool
-// 	- http://localhost:8087/z42
-// 	- http://localhost:8087/message
-// 	- http://localhost:8087/transaction
 
+if ($helpMe) {
+	die($help['node']);
+}
 
-// Push to server
-// cp -rp /Users/moon/workspace/webWallet/blockchain/composer.json /Users/moon/workspace/inescoin/blockchain-dev/; \
-// 	cp -rp /Users/moon/workspace/webWallet/blockchain/src/* /Users/moon/workspace/inescoin/blockchain-dev/src/; \
-// 	cp -rp /Users/moon/workspace/webWallet/blockchain/messenger/*.js* /Users/moon/workspace/inescoin/blockchain-dev/messenger/; \
-// 	cd /Users/moon/workspace/inescoin/blockchain-dev/; \
-// 	git add .; \
-// 	git commit -m 'up'; \
-// 	git push; \
-// 	cd /Users/moon/workspace/webWallet/blockchain/src/; \
-// 	git add .; \
-// 	git commit -m 'up'; \
-// 	git push
-//
-//
-//
 $peersConfig = [
 	[
 		'host' => '198.199.73.197',
 		'port' => 3031
 	],
 ];
-
 
 $localPeerConfig = [
 	'host' => $p2pBindIp,

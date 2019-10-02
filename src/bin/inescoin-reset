@@ -5,19 +5,25 @@
 // - Mounir R'Quiba
 // Licensed under the GNU Affero General Public License, version 3.
 
-use Inescoin\ES\ESBlockchainProvider;
-
 require __DIR__.'/../../vendor/autoload.php';
+require __DIR__ . '/../core/help.php';
 
+use Inescoin\ES\ESBlockchainProvider;
+use Inescoin\BlockchainConfig;
 
 $params = getopt('', [
 	'prefix::',
 	'height::',
+	'help::',
 ]);
 
+$prefix = $params['prefix'] ?? BlockchainConfig::NAME;
+$height = $params['height'] ?? 0;
+$helpMe = array_key_exists('help', $params);
 
-$prefix = $params['prefix'] ?? 'bob';
-$height = $params['height'] ?? 'height';
+if ($helpMe) {
+	die($help['reset']);
+}
 
 $esService = ESBlockchainProvider::getInstance($prefix);
 $esService->resetAll($height);
