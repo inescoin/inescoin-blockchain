@@ -180,7 +180,7 @@ final class Node
                 }
 
             }
-            var_dump('$data', $data);
+
             $decrypted = json_decode(base64_decode($output));
             if ($decrypted) {
                 $response = [];
