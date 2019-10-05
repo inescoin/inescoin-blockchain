@@ -114,7 +114,7 @@ class Wallet {
     	$transactionToSend = new Transaction($this->getPrivateKey(), $this->prefix);
     	$transactionToSend->init($transactionData);
 
-    	$this->transactionPool[] = $transactionToSend;
+    	$this->transactionPool[] = $transactionToSend->getInfos();
     	return $transactionToSend;
     }
 
