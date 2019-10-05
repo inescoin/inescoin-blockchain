@@ -180,6 +180,22 @@ class Blockchain {
             ];
         }
 
+        $isMultiple = array_key_exists(0, $data) && array_key_exists('from', $data[0]);
+
+        if ($isMultiple) {
+            foreach ($data as $newTransaction) {
+                $this->push($newTransaction);
+            }
+            return;
+        }
+
+        if (!$isMultiple && !isset($data['from'])) {
+            return [
+                'error' => '[PUSH] Sender address not found',
+                '$data' => $data
+            ];
+        }
+
         $transaction = new Transaction(null, $this->prefix);
         $transaction->setData($data);
 
@@ -187,12 +203,6 @@ class Blockchain {
         if ($transactionPoolExists) {
             return [
                 'error' => 'Transaction already exists'
-            ];
-        }
-
-        if (!isset($data['from'])) {
-            return [
-                'error' => '[PUSH] Sender address not found'
             ];
         }
 
