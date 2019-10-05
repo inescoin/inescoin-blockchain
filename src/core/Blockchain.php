@@ -183,10 +183,11 @@ class Blockchain {
         $isMultiple = array_key_exists(0, $data) && array_key_exists('from', $data[0]);
 
         if ($isMultiple) {
+            $response = [];
             foreach ($data as $newTransaction) {
-                $this->push($newTransaction);
+                $response[] = $this->push($newTransaction);
             }
-            return;
+            return $response;
         }
 
         if (!$isMultiple && !isset($data['from'])) {
