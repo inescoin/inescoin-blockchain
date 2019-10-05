@@ -69,9 +69,12 @@ class PKI
 		]);
 
 		$publicKeyHex = $keys->getPublic(false, "hex");
-		$_address = self::publicKeyToAddress($publicKeyHex);
+		$publicKeyHexTrue = $keys->getPublic(true, "hex");
 
-		return strtolower($_address) === strtolower($address);
+		$_address = self::publicKeyToAddress($publicKeyHex);
+		$_addressTrue = self::publicKeyToAddress($publicKeyHexTrue);
+
+		return strtolower($_address) === strtolower($address) || strtolower($_addressTrue) === strtolower($address);
 	}
 
 
@@ -171,7 +174,6 @@ class PKI
 
 	public static function encryptFromPublicKey($message, $publicKey)
 	{
-
 		openssl_public_encrypt($message, $crypted, $publicKey);
 		return base64_encode($crypted);
 	}

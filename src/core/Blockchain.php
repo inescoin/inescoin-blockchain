@@ -190,6 +190,12 @@ class Blockchain {
             ];
         }
 
+        if (!isset($data['from'])) {
+            return [
+                'error' => '[PUSH] Sender address not found'
+            ];
+        }
+
         $wallet = $this->getAddressBalances($data['from']);
 
         if (!isset($wallet[$data['from']]) && $data['from'] !== BlockchainConfig::NAME) {

@@ -19,7 +19,12 @@ class Wallet {
 	private $publicKey;
 	private $walletDirectory;
 
+	protected $remoteInfos = [];
+	protected $nodePublicKey = '';
+
 	protected $client;
+
+	protected $transactionPool = [];
 
 	public function __construct($walletDirectory = '../data/wallet/', $host = 'https//node.inescoin.org/', $prefix = '')
 	{
@@ -94,6 +99,47 @@ class Wallet {
 		return $this;
     }
 
+    public function prepareTransaction($transfers, $fee = BlockchainConfig::FIXED_TRANSACTION_FEE)
+    {
+		$this->checkRemoteInfos();
+		$this->checkNodePublicKey();
+
+		$transactionData = [
+    		'from' => $this->getAddress(),
+    		'transfers' => $transfers,
+    		'publicKey' => $this->getPublicKey(),
+    		'fee' => $fee
+    	];
+
+    	$transactionToSend = new Transaction($this->getPrivateKey(), $this->prefix);
+    	$transactionToSend->init($transactionData);
+
+    	$this->transactionPool[] = $transactionToSend;
+    	return $transactionToSend;
+    }
+
+    public function send() {
+    	$b64 = base64_encode(json_encode($this->transactionPool));
+    	$b64Split = str_split($b64, 20);
+
+    	$output = [
+    		'publicKey' => $this->publicKey,
+    		'message' => []
+    	];
+
+    	$this->privateKey = str_replace('0x', '', $this->privateKey);
+
+    	foreach ($b64Split as $part) {
+    		$_part = PKI::encryptFromPublicKey($part, base64_decode($this->nodePublicKey));
+    		$output['message'][] = [
+    			'd' => bin2hex($_part),
+    			's' => PKI::ecSign($_part, $this->privateKey)
+    		];
+    	}
+
+    	return $this->_jsonRPC('POST', 'transaction', $output);
+    }
+
     public function sendTransaction($transfers)
     {
 		$transactionData = [
@@ -137,6 +183,37 @@ class Wallet {
     	return PKI::decryptFromPrivateKey($messageData['message'], base64_decode($this->getPrivateMessageKey()));
     }
 
+    public function getRemoteInfos()
+    {
+    	return $this->isRemoteInfos() ? $this->remoteInfos[$this->address] : [];
+    }
+
+    public function isRemoteInfos()
+    {
+    	return !empty($this->remoteInfos);
+    }
+
+    public function checkRemoteInfos()
+    {
+		$data = [
+    		'walletAddresses' => $this->getAddress()
+    	];
+
+    	$this->remoteInfos = $this->_jsonRPC('POST', 'get-wallet-addresses-infos', $data);
+    }
+
+    public function checkNodePublicKey()
+    {
+		$response = $this->_jsonRPC('GET', 'public-key');
+
+		$this->nodePublicKey = $response['publicKey'] ?? '';
+    }
+
+    public function getNodePublicKey()
+    {
+    	return $this->nodePublicKey;
+    }
+
     private function _jsonRPC($method = 'POST', $uri = '', $params = [])
     {
     	$allowedMethods = ['POST', 'GET'];
@@ -145,7 +222,18 @@ class Wallet {
     		$method = 'GET';
     	}
 
-		return $this->client->request($method, $uri, [ 'json' => $params]);
+    	$response = [];
+    	try {
+			$response = $this->client->request($method, $uri, [ 'json' => $params]);
+    	} catch(\Exception $e) {
+    		$response['error'] = $e->getMessage();
+    	}
+
+    	if (!is_array($response) && $response->getStatusCode() === 200) {
+    		$response = (array) json_decode($response->getBody()->getContents());
+    	}
+
+    	return $response;
 	}
 
 	public function getKeys() {

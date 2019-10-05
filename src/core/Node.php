@@ -96,7 +96,6 @@ final class Node
                 return $pushed;
             }
         }
-
         return [
             'error' => 'invalid public key check'
         ];
@@ -169,14 +168,20 @@ final class Node
             $publicKey = $data['publicKey'];
             $cMessage = count($data['message']);
             foreach ($data['message'] as $position => $message) {
-                if (PKI::ecVerifyHex($message['d'], $message['s'], $publicKey)) {
-                    $_part = PKI::decryptFromPrivateKey(hex2bin($message['d']), $pk);
-                    $output .= $_part;
-                } else {
-                    var_dump('[Node] [checkFromMemoryPool] ERROR signature position ' . $position . '/' . $cMessage);
+                try {
+                    if (PKI::ecVerifyHex($message['d'], $message['s'], $publicKey)) {
+                        $_part = PKI::decryptFromPrivateKey(hex2bin($message['d']), $pk);
+                        $output .= $_part;
+                    } else {
+                        var_dump('[Node] [checkFromMemoryPool] ERROR signature position ' . $position . '/' . $cMessage);
+                    }
+                } catch(\Exception $e) {
+                    var_dump('[ERROR] : @323');
                 }
+
             }
-            $decrypted = @json_decode(base64_decode($output));
+            var_dump('$data', $data);
+            $decrypted = json_decode(base64_decode($output));
             if ($decrypted) {
                 $response = [];
                 $response['broadcasted'] = true;

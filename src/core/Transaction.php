@@ -213,15 +213,17 @@ class Transaction {
         	$this->createdAt = $this->createdAt->getTimestamp();
         }
 
-		if (!$this->coinbase && !empty($this->privateKey) && NULL === $this->amountWithFee) {
-			$this->fee = $this->fee >= $this->fixedFee ? $this->fee : $this->fixedFee;
-		}
+		// if (!$this->coinbase && !empty($this->privateKey) && NULL === $this->amountWithFee) {
+		// 	$this->fee = $this->fee >= $this->fixedFee ? $this->fee : $this->fixedFee;
+		// }
 
-		if (!$this->coinbase && NULL === $this->amountWithFee) {
-        	$this->amountWithFee = $this->amount + $this->fixedFee;
+		if (!$this->coinbase && $this->fee === 0) {
+        	$this->fee = $this->fixedFee;
         }
 
-        if ($this->coinbase) {
+		if (!$this->coinbase) {
+        	$this->amountWithFee = $this->amount + $this->fee;
+        } else {
         	$this->amountWithFee = $this->amount;
         	$this->fee = 0;
         }
@@ -278,9 +280,8 @@ class Transaction {
 		return $this;
 	}
 
-	public function isValid()
+	public function isValid($checkTransfers = false)
 	{
-
 		if (!$this->isValidTransfers()) {
 			var_dump('ERROR: Invalid transfers');
 			return false;
@@ -320,6 +321,10 @@ class Transaction {
 
 		if (!$this->coinbase && !PKI::ecVerify($this->getHash(), $this->signature, $this->publicKey)) {
 			var_dump('ERROR: Invalid signature');
+			return false;
+		}
+
+		if ($checkTransfers && !$this->isValidTransfers()) {
 			return false;
 		}
 
