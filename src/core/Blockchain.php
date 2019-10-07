@@ -223,7 +223,7 @@ class Blockchain {
 
         if ($transaction->getBankHash() !== $wallet[$data['from']]['hash']) {
             return [
-                'error' => 'Invalid bank hash'
+                'error' => 'Invalid bank hash ' . $transaction->getBankHash() . ' excpeted ' . $wallet[$data['from']]['hash'],
             ];
         }
 

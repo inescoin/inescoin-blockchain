@@ -1,3 +1,5 @@
 /test
 /vendor
 /cache
+/messenger/node_modules/
+/messenger/logs/

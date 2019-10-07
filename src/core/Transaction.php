@@ -232,7 +232,7 @@ class Transaction {
 
 		$walletBank = $this->bankService->getAddressBalances($this->from);
 
-		if (!empty($walletBank)) {
+		if (!empty($walletBank) && empty($this->bankHash)) {
 			$this->bankHash = $walletBank[$this->from]['hash'];
 		}
 
@@ -315,7 +315,7 @@ class Transaction {
 		}
 
 		if (!$this->coinbase && !$this->imNotEmpty()) {
-			var_dump('ERROR: Empty property');
+			var_dump('ERROR: Empty property', $this->getInfos());
 			return false;
 		}
 
@@ -376,7 +376,7 @@ class Transaction {
 			}
 
 			if ($hash !== $transfer['hash']) {
-				var_dump('ERROR: hash transfer invalid');
+				var_dump('ERROR: hash transfer invalid', $hash, $transfer);
 				return false;
 			}
 

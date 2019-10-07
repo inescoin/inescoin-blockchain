@@ -13,6 +13,7 @@ use GuzzleHttp\Client;
 
 class Wallet {
 
+    private $bankHash = '';
 	private $prefix = '';
 	private $address;
 	private $privateKey;
@@ -105,6 +106,7 @@ class Wallet {
 		$this->checkNodePublicKey();
 
 		$transactionData = [
+            'bankHash' => $this->getBankHash(),
     		'from' => $this->getAddress(),
     		'transfers' => $transfers,
     		'publicKey' => $this->getPublicKey(),
@@ -114,11 +116,19 @@ class Wallet {
     	$transactionToSend = new Transaction($this->getPrivateKey(), $this->prefix);
     	$transactionToSend->init($transactionData);
 
-    	$this->transactionPool[] = $transactionToSend->getInfos();
+    	$this->transactionPool = $transactionToSend->getInfos();
     	return $transactionToSend;
     }
 
     public function send() {
+        if (empty($this->remoteInfos)) {
+            throw new Exception("[ERROR] Empty remote infos", 1);
+        }
+
+        if (empty($this->nodePublicKey)) {
+            throw new Exception("[ERROR] Empty nodePublicKey", 1);
+        }
+
     	$b64 = base64_encode(json_encode($this->transactionPool));
     	$b64Split = str_split($b64, 20);
 
@@ -137,6 +147,7 @@ class Wallet {
     		];
     	}
 
+        $this->transactionPool = [];
     	return $this->_jsonRPC('POST', 'transaction', $output);
     }
 
@@ -185,7 +196,8 @@ class Wallet {
 
     public function getRemoteInfos()
     {
-    	return $this->isRemoteInfos() ? $this->remoteInfos[$this->address] : [];
+    	$res = isset($this->remoteInfos[$this->address]) ? $this->remoteInfos[$this->address] : [];
+        return $this->isRemoteInfos() ? $res : [];
     }
 
     public function isRemoteInfos()
@@ -199,7 +211,19 @@ class Wallet {
     		'walletAddresses' => $this->getAddress()
     	];
 
-    	$this->remoteInfos = $this->_jsonRPC('POST', 'get-wallet-addresses-infos', $data);
+        $response = $this->_jsonRPC('POST', 'get-wallet-addresses-infos', $data);
+
+        if (isset($response['error'])) {
+            die($response['error']. PHP_EOL);
+        }
+
+        if (empty($response)) {
+            die('[ERROR] REMOTE NODE - Wallet address not found.' . PHP_EOL);
+        }
+
+        $this->remoteInfos = $response;
+        $remoteInfos = $this->getRemoteInfos();
+        $this->bankHash = !empty($remoteInfos) ? $remoteInfos->hash : '';
     }
 
     public function checkNodePublicKey()
@@ -235,6 +259,10 @@ class Wallet {
 
     	return $response;
 	}
+
+    public function getBankHash() {
+        return $this->bankHash;
+    }
 
 	public function getKeys() {
 		return [
