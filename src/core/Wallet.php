@@ -8,7 +8,7 @@ namespace Inescoin;
 
 use Inescoin\Message;
 use Inescoin\Transaction;
-
+use Inescoin\PKI;
 use GuzzleHttp\Client;
 
 class Wallet {
@@ -129,69 +129,10 @@ class Wallet {
             throw new Exception("[ERROR] Empty nodePublicKey", 1);
         }
 
-    	$b64 = base64_encode(json_encode($this->transactionPool));
-    	$b64Split = str_split($b64, 20);
-
-    	$output = [
-    		'publicKey' => $this->publicKey,
-    		'message' => []
-    	];
-
-    	$this->privateKey = str_replace('0x', '', $this->privateKey);
-
-    	foreach ($b64Split as $part) {
-    		$_part = PKI::encryptFromPublicKey($part, base64_decode($this->nodePublicKey));
-    		$output['message'][] = [
-    			'd' => bin2hex($_part),
-    			's' => PKI::ecSign($_part, $this->privateKey)
-    		];
-    	}
+        $output = PKI::encryptForNode($this->transactionPool, $this->publicKey, $this->privateKey, $this->nodePublicKey);
 
         $this->transactionPool = [];
     	return $this->_jsonRPC('POST', 'transaction', $output);
-    }
-
-    public function sendTransaction($transfers)
-    {
-		$transactionData = [
-    		'from' => $this->getAddress(),
-    		'transfers' => $transfers,
-    		'publicKey' => $this->getPublicKey()
-    	];
-
-    	$transactionToSend = new Transaction($this->getPrivateKey(), $this->prefix);
-    	$transactionToSend->init($transactionData);
-
-
-    	$this->_jsonRPC('POST', 'mempool', $transactionToSend->getInfos());
-
-    	return $transactionToSend;
-    }
-
-    public function sendMessage($publicAddress, $publicMessageKey, $message)
-    {
-    	$messageData = [
-    		'from' => $this->getAddress(),
-    		'to' => $publicAddress,
-    		'message' => PKI::encryptFromPublicKey($message, base64_decode($publicMessageKey)),
-    		'publicKey' => $this->getPublicKey()
-    	];
-
-    	$messageToSend = new Message($this->getPrivateKey());
-    	$messageToSend->init($messageData);
-
-    	$this->_jsonRPC('POST', 'z42', $messageToSend->getInfos());
-
-
-    	return $messageToSend;
-    }
-
-    public function readMessage($messageData)
-    {
-    	$messageReceived = new Message($this->getPrivateKey());
-    	$messageReceived->setData($messageData);
-
-    	return PKI::decryptFromPrivateKey($messageData['message'], base64_decode($this->getPrivateMessageKey()));
     }
 
     public function getRemoteInfos()

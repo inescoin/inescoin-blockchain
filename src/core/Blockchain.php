@@ -136,7 +136,11 @@ class Blockchain {
     }
 
     public function getWalletAddressInfos($walletAddress = null, $page = 1) {
-        return $this->es->bankService()->getWalletAddressInfos($walletAddress, $page);;
+        return $this->es->bankService()->getWalletAddressInfos($walletAddress, $page);
+    }
+
+    public function getWalletAddressDomain($walletAddress = null, $page = 1) {
+        return $this->es->domainService()->getByAddress($walletAddress, 100, $page);;
     }
 
     public function getAddressBalances($addressList = []) {
@@ -154,6 +158,12 @@ class Blockchain {
     public function getLastBlocks($limit = 1, $asArray = false, $page = 1) {
         return $this->es->blockService()->getLastBlocks($limit, $asArray, $page);
     }
+
+    public function getLastDomains() {
+        return $this->es->domainService()->getLastDomains();
+    }
+
+
 
     public function getInfos() {
         return [
@@ -181,7 +191,6 @@ class Blockchain {
         }
 
         $isMultiple = array_key_exists(0, $data) && array_key_exists('from', $data[0]);
-
         if ($isMultiple) {
             $response = [];
             foreach ($data as $newTransaction) {
@@ -260,8 +269,14 @@ class Blockchain {
         if (!empty($this->transactionPool)
             && ($countTransactions >= $limit || (time() - $this->lastTransactionPool) > 10))
         {
-            $this->es->transferPoolService->bulkIndex($this->transferPool);
-            $this->es->transactionPoolService->bulkIndex($this->transactionPool);
+            try {
+                $this->es->transferPoolService()->bulkIndex($this->transferPool);
+                $this->es->transactionPoolService()->bulkIndex($this->transactionPool);
+            } catch(\Exception $e) {
+                return [
+                    'error' => $e->getMessage()
+                ];
+            }
 
             // Clean
             $this->transferPool = [];
@@ -515,7 +530,10 @@ class Blockchain {
     {
         $this->es->bankService()->reset()->initIndex();
         $this->es->transferService()->reset()->initIndex();
-        $this->es->transactionService()->reset()->initIndex();
+        $this->es->transactionPoolService()->reset()->initIndex();
+        $this->es->transferService()->reset()->initIndex();
+        $this->es->todoService()->reset()->initIndex();
+        $this->es->domainService()->reset()->initIndex();
 
         $this->createGenesisBlock();
 

@@ -21,6 +21,7 @@ class ESBankService extends ESService
 		$this->transactionService = ESService::getInstance('transaction', $prefix);
 		$this->transferService = ESService::getInstance('transfer', $prefix);
 		$this->transferPoolService = ESService::getInstance('transferPool', $prefix);
+		$this->domainService = ESService::getInstance('domain', $prefix);
 
 		$this->index = $prefix ? $prefix . '_' . $this->index : $this->index;
 		parent::__construct();
@@ -146,6 +147,7 @@ class ESBankService extends ESService
 
 		$infos['transfers'] = $this->transferService->getWalletAddressHistory($walletAddress, 100, $page);
 		$infos['transfersPool'] = $this->transferPoolService->getWalletAddressHistory($walletAddress, 100, $page);
+		$infos['domains'] = $this->domainService->getByAddress($walletAddress, 100, $page);
 
 		return $infos;
 	}

@@ -196,7 +196,11 @@ class ESService
 		}
 
 		if (!empty($params['body'])) {
-			$this->client->bulk($params);
+			try {
+				$this->client->bulk($params);
+			} catch (\Exception $e) {
+				var_dump('ERROR --> ' . $e->getMessage());
+			}
 		}
 	}
 

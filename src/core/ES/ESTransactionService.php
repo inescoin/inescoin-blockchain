@@ -174,7 +174,7 @@ class ESTransactionService extends ESService
 		}
 
 		$transaction = $result['hits']['hits'][0]['_source'];
-		var_dump($transaction['transfers']);
+		$transaction['toDo'] = json_decode($transaction['toDo'], true);
 		$transaction['transfers'] = json_decode($transaction['transfers'], true);
 		return $transaction;
 	}
@@ -286,6 +286,9 @@ class ESTransactionService extends ESService
 			          'type' => 'text'
 			        ],
 			        'transfers' => [
+			          'type' => 'text'
+			        ],
+			        'toDo' => [
 			          'type' => 'text'
 			        ],
 		    	],

@@ -279,6 +279,32 @@ class PKI
 		return $name . '-crt.pem';
     }
 
+    public static function encryptForNode($dataArray, $publicKey, $privateKey, $nodePublicKey) {
+    	if (!is_array($dataArray)) {
+    		return [];
+    	}
+
+    	$b64 = base64_encode(json_encode($dataArray));
+    	$b64Split = str_split($b64, 20);
+
+    	$output = [
+    		'publicKey' => $publicKey,
+    		'message' => []
+    	];
+
+    	$privateKey = str_replace('0x', '', $privateKey);
+
+    	foreach ($b64Split as $part) {
+    		$_part = PKI::encryptFromPublicKey($part, base64_decode($nodePublicKey));
+    		$output['message'][] = [
+    			'd' => bin2hex($_part),
+    			's' => PKI::ecSign($_part, $privateKey)
+    		];
+    	}
+
+    	return $output;
+    }
+
     public static function encryptForTransfer($messageBase64, $toPublicKey = '', $fromPrivatekey = '')
     {
     	// $toPublicKey = base64_decode("LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUF2YndRdXhLZ0hPenBzcDBWWC9vbgoydFdlek5aWm9tbmFlNERROEJEQVY3aGdLL2dtOFpXbkp1UmZ0QU9TOFdGVFhtdFpsRlNLTE5sbGRMd2YvN1BZClk5OXcyV01oaU54NER1VThTNEhqSGFyd3AyU3NNYlUwdC9PM3g4VFVPeFFWSG1lRnZ1a2hmWXlqN3BFYlJXTisKQ2NmK0kzVzZoTGV2M0k1MExVZmlUcU8zM21RYjcrZlgrNE4vSmJFY3FsbERZSUlRTVVneklNcnV2bUxBZVJpMQp1cHZsaXExZG05Z0E3TGg1RytuczAvREQ2L1VYM0Y1MGdyRUwvVnNjVFk4R0dDenJiMEZRLzlaZHRoejdsb1ZVCmRHWVN0eWVmSVVOUzFGaHNoSkR6RTFuZk13RG0xWkw3REpEaFR2UlZ1Y3FoWEhadVdOUEhhWGpndkR1WC9ocUwKRHdJREFRQUIKLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg==");

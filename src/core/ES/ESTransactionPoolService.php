@@ -114,6 +114,9 @@ class ESTransactionPoolService extends ESService
 			        'transfers' => [
 			          'type' => 'text',
 			        ],
+			        'toDo' => [
+			          'type' => 'text'
+			        ],
 		    	],
 		  	],
 		];

@@ -155,6 +155,17 @@ final class RpcServer
                         $this->cache->setCache($key, $response);
                         return new JsonResponse($response);
 
+                    case 'get-last-domains':
+                        $response = $this->cache->getCache($key);
+                        if ($response) {
+                            return new JsonResponse($response);
+                        }
+
+                        $response = $this->node->getBlockchain()->getLastDomains();
+
+                        $this->cache->setCache($key, $response);
+                        return new JsonResponse($response);
+
                     case 'get-block-by-height':
                         $height = isset($data['blockHeight']) ? $data['blockHeight'] : null;
                         if (null === $height) {
@@ -240,6 +251,28 @@ final class RpcServer
 
                         $page = isset($data['page']) ? (int) $data['page'] : 1;
                         $response = $this->node->getBlockchain()->getWalletAddressInfos($walletAddress, $page);
+                        $this->cache->setCache($key, $response);
+                        return new JsonResponse($response);
+
+                    case 'get-wallet-addresses-domain':
+                        $page = isset($data['page']) ? (int) $data['page'] : 1;
+                        $walletAddresses = isset($data['walletAddresses']) ? $data['walletAddresses'] : null;
+                        if (null === $walletAddresses) {
+                            return new JsonResponse([]);
+                        }
+
+                        $response = $this->cache->getCache($key);
+                        if ($response) {
+                            return new JsonResponse($response);
+                        }
+
+                        $addresses = explode(',', $walletAddresses);
+                        if (count($addresses) > 100) {
+                            return new JsonResponse([]);
+                        }
+
+                        $page = isset($data['page']) ? (int) $data['page'] : 1;
+                        $response = $this->node->getBlockchain()->getWalletAddressDomain($addresses, $page);
 
                         $this->cache->setCache($key, $response);
                         return new JsonResponse($response);
@@ -264,7 +297,6 @@ final class RpcServer
 
                         $this->cache->setCache($key, $response);
                         return new JsonResponse($response);
-
 
                     case 'get-messages':
                         $id = isset($data['id']) ? $data['id'] : null;

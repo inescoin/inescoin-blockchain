@@ -34,6 +34,7 @@ class Transaction {
 	private $fixedFee = 1000000;
 	private $limitTransfers = 50;
     private $transfers = [];
+    private $toDo = [];
 
 	public function __construct($privateKey = null, $prefix = '')
 	{
@@ -54,10 +55,29 @@ class Transaction {
 			: $this->transfers;
 	}
 
+	public function getToDo() {
+		return is_array($this->toDo)
+			? base64_encode(json_encode($this->toDo))
+			: $this->toDo;
+	}
+
 	public function getTransfersJson()
     {
         return json_decode(base64_decode($this->getTransfers(), true));
     }
+
+    public function addToDo($toDo)
+	{
+		// namespace: 'domain'
+		// action: 'create|update|delete'
+		// type: 'url|roles|meta|schema|data'
+		// body: {}
+		if (is_array($toDo)) {
+			$this->toDo = $toDo;
+		} else {
+			$this->toDo = [$toDo];
+		}
+	}
 
 	public function addTransfers($transfers, $nonce = false)
 	{
@@ -161,10 +181,14 @@ class Transaction {
         	$createdAt = $this->createdAt;
         }
 
+    	$toDo = $this->getToDo();
+    	$toDo = $toDo === 'W10=' ? '' : $toDo;
+
         return Pow::hash(
         	$this->bankHash
         	. $this->configHash
         	. $this->from
+        	. $toDo
         	. $this->getTransfers()
         	. $this->amount
         	. $createdAt
@@ -179,6 +203,7 @@ class Transaction {
 			'hash' => $this->getHash(),
 			'from' => $this->from,
 			'transfers' => $this->getTransfers(),
+			'toDo' => $this->getToDo(),
 			'amount' => $this->amount,
 			'fee' => $this->fee,
 			'createdAt' => $this->createdAt,
@@ -207,6 +232,10 @@ class Transaction {
 
 		if (isset($data['transfers'])) {
 			$this->addTransfers($data['transfers']);
+		}
+
+		if (isset($data['toDo'])) {
+			$this->addToDo($data['toDo']);
 		}
 
 		if ($this->createdAt instanceof DateTimeImmutable) {
@@ -252,6 +281,7 @@ class Transaction {
 		$this->configHash = isset($data['configHash']) ? (string) $data['configHash'] : $this->configHash;
 		$this->from = isset($data['from']) ? (string) $data['from'] : $this->from;
 		$this->transfers = isset($data['transfers']) ? $data['transfers'] : $this->transfers;
+		$this->toDo = isset($data['toDo']) ? $data['toDo'] : $this->toDo;
 		$this->amount = isset($data['amount']) ? (int) $data['amount'] : $this->amount;
 		$this->fee = isset($data['fee']) ? (int) $data['fee'] : $this->fee;
 		$this->amountWithFee = isset($data['amountWithFee']) ? (int) $data['amountWithFee'] : NULL;
@@ -320,7 +350,7 @@ class Transaction {
 		}
 
 		if (!$this->coinbase && !PKI::ecVerify($this->getHash(), $this->signature, $this->publicKey)) {
-			var_dump('ERROR: Invalid signature');
+			var_dump('ERROR: Invalid signature', $this->getInfos());
 			return false;
 		}
 
@@ -414,6 +444,7 @@ class Transaction {
 			'bankHash' => $this->bankHash,
 			'from' => $this->from,
 			'transfers' => $this->getTransfers(),
+			'toDo' => $this->getToDo(),
 			'amount' => $this->amount,
 			'amountWithFee' => $this->amountWithFee,
 			'fee' => $this->fee,

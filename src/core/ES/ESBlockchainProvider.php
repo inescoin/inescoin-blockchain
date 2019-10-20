@@ -14,6 +14,10 @@ class ESBlockchainProvider {
 	private $websiteService;
 	private $productService;
 	private $bankService;
+	private $transferService;
+	private $transferPoolService;
+	private $domainService;
+	private $todoService;
 
 	private static $esBlockchainProviderInstance = null;
 
@@ -27,6 +31,9 @@ class ESBlockchainProvider {
 		$this->bankService = ESService::getInstance('bank', $prefix);
 		$this->transferService = ESService::getInstance('transfer', $prefix);
 		$this->transferPoolService = ESService::getInstance('transferPool', $prefix);
+		$this->domainService = ESService::getInstance('domain', $prefix);
+		$this->websiteService = ESService::getInstance('website', $prefix);
+		$this->todoService = ESService::getInstance('todo', $prefix);
 	}
 
 	public function blockService()
@@ -74,9 +81,19 @@ class ESBlockchainProvider {
 		return $this->messagePoolService;
 	}
 
-	public function cutBlockchainFromHeight($height)
+	public function domainService()
 	{
+		return $this->domainService;
+	}
 
+	public function websiteService()
+	{
+		return $this->websiteService;
+	}
+
+	public function todoService()
+	{
+		return $this->todoService;
 	}
 
 	public function resetAll($heigth) {
@@ -86,6 +103,9 @@ class ESBlockchainProvider {
 			$this->transactionPoolService->reset();
 			$this->messageService->reset();
 			$this->messagePoolService->reset();
+			$this->todoService->reset();
+			$this->domainService->reset();
+			$this->websiteService->reset();
 			// $this->peerService->reset();
 			$this->bankService->reset();
 			$this->transferService->reset();
@@ -104,6 +124,4 @@ class ESBlockchainProvider {
 
 		return self::$esBlockchainProviderInstance;
 	}
-
-
 }

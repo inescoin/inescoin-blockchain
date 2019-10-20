@@ -8,6 +8,19 @@ require __DIR__.'/../../vendor/autoload.php';
 
 use Inescoin\BlockchainConfig;
 
+$help['consumer'] = "
+" . ucfirst(BlockchainConfig::NAME) . " [" . strtoupper(BlockchainConfig::SYMBOL). "] v". BlockchainConfig::VERSION ."
+
+Usage:
+  bin/" . BlockchainConfig::NAME . "-consumer --help
+  bin/" . BlockchainConfig::NAME . "-consumer --prefix=" . BlockchainConfig::NAME . "
+
+Options:
+  --help               Show help console
+
+  --prefix=<prefix>    Blockchain prefix (" . BlockchainConfig::NAME . ")
+  ". PHP_EOL;
+
 $help['export'] = "
 " . ucfirst(BlockchainConfig::NAME) . " [" . strtoupper(BlockchainConfig::SYMBOL). "] v". BlockchainConfig::VERSION ."
 
