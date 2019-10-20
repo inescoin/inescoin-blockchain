@@ -1,0 +1,130 @@
+#!/usr/bin/env php
+<?php
+
+// Copyright 2019 The Inescoin developers.
+// - Mounir R'Quiba
+// Licensed under the GNU Affero General Public License, version 3.
+
+require __DIR__.'/../../vendor/autoload.php';
+require __DIR__ . '/../core/help.php';
+
+use Inescoin\BlockchainConfig;
+use Inescoin\Wallet;
+
+$params = getopt('', [
+	'prefix::',
+	'wallet-file::',
+	'wallet-password::',
+	'data-folder::',
+	'node-address::',
+	'node-protocol::',
+	'help::',
+]);
+
+$prefix = $params['prefix'] ?? BlockchainConfig::NAME;
+$walletFile = $params['wallet-file'] ?? '' ;
+$walletPassword = $params['wallet-password'] ?? '' ;
+$dataFolder = $params['data-folder'] ?? './';
+$nodeAddress = $params['node-address'] ?? '127.0.0.1:8087';
+$nodeProtocol = $params['node-protocol'] ?? 'http';
+$helpMe = array_key_exists('help', $params);
+
+if ($helpMe) {
+	die($help['wallet']);
+}
+
+if (empty($params['wallet-file'])) {
+	throw new Exception("Option '--wallet-file=/path/to/wallet.file' not found", 1);
+}
+
+if (empty($params['wallet-password'])) {
+	throw new Exception("Option '--wallet-password=password' not found", 1);
+}
+
+$nodeAddress = $nodeProtocol . '://' . $nodeAddress . '/';
+var_dump('HOST: ' . $nodeAddress);
+
+$wallet = new Wallet($dataFolder, $nodeAddress, $prefix);
+$userWallet = $wallet->generateWallet($walletFile, $walletPassword);
+$address = $userWallet->getAddress();
+
+var_dump('Wallet opened: ' . $address);
+
+while (true) {
+	$waittingTransactions = [[
+			'amount' => 100000000 * (random_int(1, 100) / 10),
+			'to' => '0x07688bd57457023d270920AdaA2F00Ed6Ea7e6bE',
+			'walletId' => 'PRT-' . random_int(111111,999999)
+		], [
+			'amount' => 100000000 * (random_int(1, 100) / 10),
+			'to' => '0x9A7352475170B493dAb36D3E1324413D0b6C536D',
+			'walletId' => 'PRT-' . random_int(111111,999999)
+		], [
+			'amount' => 100000000 * (random_int(1, 100) / 10),
+			'to' => '0xe9bBE2E0ef821544dCbbdE255Ce2837374088909',
+			'walletId' => 'PRT-' . random_int(111111,999999)
+		], [
+			'amount' => 100000000 * (random_int(1, 100) / 10),
+			'to' => '0x931E3ba3e55fde770c118C4eDAef820AAf6b2BEc',
+			'walletId' => 'PRT-' . random_int(111111,999999)
+		], [
+			'amount' => 100000000 * (random_int(1, 100) / 10),
+			'to' => '0xF56417B281756C4152e12Ed274b9CdC116fc3256',
+			'walletId' => 'PRT-' . random_int(111111,999999)
+		]];
+
+	// var_dump($waittingTransactions);
+
+	$transaction = $userWallet->prepareTransaction($waittingTransactions);
+	if ($transaction->isValid(true)) {
+		try {
+			$response = $userWallet->send();
+			var_dump('Status: Valid transaction');
+			var_dump($response);
+		} catch (Exception $e) {
+			var_dump($e->getMessage());
+		}
+	} else {
+		var_dump('Status: Invalid transaction');
+	}
+
+	sleep(1);
+}
+
+
+// $transfers = [];
+// // $transfers[] = [
+// // 	'to' => '0x812d685a490ebf3dbabf23ba9fd7b8523fa3e521',
+// // 	'amount' => 50 * 1000000000
+// // ];
+// // $transfers[] = [
+// // 	'to' => '0x9bc13102348b9ec9091bf3384aa1f11526329eb6',
+// // 	'amount' => 50 * 1000000000
+// // ];
+
+// // $userWallet->sendTransaction($transfers);
+
+// sleep(3);
+// for ($i=0; $i < 5; $i++) {
+// 	for ($y=0; $y < 3; $y++) {
+// 		$walletBob = new Wallet($dataFolder, $prefix);
+// 		$userWalletBob = $walletBob->generateWallet('BobWalletFile' . mt_rand(1, 999999999999), '$walletPassword', false);
+
+// 		$transfers = [];
+// 		for ($z=0; $z < 10; $z++) {
+// 			$transfers[] = [
+// 				'to' => $userWalletBob->getAddress(),
+// 				'amount' =>  7 * 1000000000,
+// 				'fee' => 0.001 * 1000000000
+// 			];
+// 		}
+
+// 	}
+// 	var_dump('$transfers ok');
+// 	$userWallet->sendTransaction($transfers);
+// }
+
+
+
+// $userWallet->sendMessage($userWalletBob->getAddress(), $userWalletBob->getPublicMessageKey(), 'Comment va tu?');
+// var_dump($userWallet);

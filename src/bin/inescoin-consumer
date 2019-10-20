@@ -1,0 +1,111 @@
+#!/usr/bin/env php
+<?php
+
+// Copyright 2019 The Inescoin developers.
+// - Mounir R'Quiba
+// Licensed under the GNU Affero General Public License, version 3.
+
+require __DIR__.'/../../vendor/autoload.php';
+require __DIR__ . '/../core/help.php';
+
+use Inescoin\ES\ESBlockchainProvider;
+use Inescoin\BlockchainConfig;
+
+$params = getopt('', [
+	'prefix::',
+	'help::',
+]);
+
+$prefix = $params['prefix'] ?? BlockchainConfig::NAME;
+$helpMe = array_key_exists('help', $params);
+
+if ($helpMe) {
+	die($help['consumer']);
+}
+
+$esService = ESBlockchainProvider::getInstance($prefix);
+
+$todos = $esService->todoService()->all();
+
+foreach ($todos['hits']['hits'] as $todo) {
+	$command = (array) json_decode($todo['_source']['command']);
+	if (!isset($command['name'])) {
+		var_dump($todo['_source']['hash'] . ' - $command[\'name\'] not found');
+		continue;
+	}
+
+	if (!isset($command['action'])) {
+		var_dump($todo['_source']['hash'] . ' - $command[\'action\'] not found');
+		continue;
+	}
+
+	if (!isset($command['signature'])) {
+		var_dump($todo['_source']['hash'] . ' - $command[\'signature\'] not found');
+		continue;
+	}
+
+	if (!isset($todo['_source']['transactionHash'])) {
+		var_dump($todo['_source']['hash'] . ' - $command[\'transactionHash\'] not found');
+		continue;
+	}
+
+	if (!isset($todo['_source']['ownerAddress'])) {
+		var_dump($todo['_source']['hash'] . ' - $command[\'ownerAddress\'] not found');
+		continue;
+	}
+
+	if (!isset($todo['_source']['ownerPublicKey'])) {
+		var_dump($todo['_source']['hash'] . ' - $command[\'ownerPublicKey\'] not found');
+		continue;
+	}
+
+	if (!isset($todo['_source']['blockHeight'])) {
+		var_dump($todo['_source']['hash'] . ' - $command[\'blockHeight\'] not found');
+		continue;
+	}
+
+	$exec = [
+		'hash' => $todo['_source']['hash'],
+		'url' => $command['name'],
+		'ownerAddress' => $todo['_source']['ownerAddress'],
+		'ownerPublicKey' => $todo['_source']['ownerPublicKey'],
+		'signature' => $command['signature'],
+		'blockHeight' => $todo['_source']['blockHeight'],
+		'transactionHash' => $todo['_source']['transactionHash'],
+	];
+
+	if (!isset($command['action'])) {
+		continue;
+	}
+
+	if($command['action'] === 'create') {
+		var_dump($exec);
+		$esService->domainService()->index($command['name'], $exec);
+		$esService->todoService()->delete($todo['_id']);
+	}
+
+	if($command['action'] === 'update') {
+		$website = $esService->domainService()->get($command['name']);
+		if (isset($website['error'])) {
+			var_dump('[ERROR] Domain not found: ' . $command['name']);
+			$esService->todoService()->delete($todo['_id']);
+		} else {
+			$websiteSource = $website['_source'];
+			$exec = [
+				'hash' => $websiteSource['hash'],
+				'url' => $websiteSource['url'],
+				'body' => base64_encode(json_encode($command['data'])),
+				'ownerAddress' => $websiteSource['ownerAddress'],
+				'ownerPublicKey' => $websiteSource['ownerPublicKey'],
+				'signature' => $command['signature'],
+				'blockHeight' => $todo['_source']['blockHeight'],
+				'transactionHash' => $todo['_source']['transactionHash'],
+			];
+
+			var_dump($exec);
+			$v = $esService->websiteService()->index($websiteSource['url'], $exec);
+			var_dump($v);
+			$esService->todoService()->delete($todo['_id']);
+		}
+	}
+}
