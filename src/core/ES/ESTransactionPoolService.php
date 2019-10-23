@@ -117,6 +117,9 @@ class ESTransactionPoolService extends ESService
 			        'toDo' => [
 			          'type' => 'text'
 			        ],
+			        'toDoHash' => [
+			          'type' => 'text'
+			        ],
 		    	],
 		  	],
 		];

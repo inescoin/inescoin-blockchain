@@ -143,6 +143,10 @@ class Blockchain {
         return $this->es->domainService()->getByAddress($walletAddress, 100, $page);;
     }
 
+    public function getDomainByUrl($url = null) {
+        return $this->es->websiteService()->getByUrl($url);;
+    }
+
     public function getAddressBalances($addressList = []) {
         return $this->es->bankService()->getAddressBalances($addressList);;
     }
@@ -206,6 +210,54 @@ class Blockchain {
             ];
         }
 
+        $todo = @json_decode(base64_decode($data['toDo']), true);
+        if ($todo && !empty($todo)) {
+            $_todo = $todo[0];
+            $action = $_todo['action'];
+            $amount = $data['amount'];
+            $url = strtolower($_todo['name']);
+
+            if ($action !== 'update' && !($amount === 99999000000 || $amount === 199999000000 || $amount === 299999000000)) {
+                return [
+                    'error' => 'Bad domain amount'
+                ];
+            }
+
+            if ($action === 'update' && $amount !== 999000000) {
+                return [
+                    'error' => 'Bad domain amount'
+                ];
+            }
+
+            if (!ctype_alnum($url)) {
+                return [
+                    'error' => 'Domain name not alphanumeric'
+                ];
+            }
+
+            if (strlen($url) < 7) {
+                return [
+                    'error' => 'Domain name too small < 7'
+                ];
+            }
+
+            if (strlen($url) > 70) {
+                return [
+                    'error' => 'Domain name too big > 70'
+                ];
+            }
+
+            if ($action === 'create') {
+                $domainExists = $this->es->domainService()->exists($url);
+                var_dump($domainExists);
+                if ($domainExists) {
+                    return [
+                        'error' => 'Domain already exists'
+                    ];
+                }
+            }
+        }
+
         $transaction = new Transaction(null, $this->prefix);
         $transaction->setData($data);
 
@@ -259,6 +311,7 @@ class Blockchain {
             }
         } else {
             $mTransaction = false;
+            var_dump('[Blockchain] [ERROR] Invalid transaction sent to blockchain');
             return [
                 'error' => 'Invalid transaction sent to blockchain'
             ];
@@ -417,6 +470,7 @@ class Blockchain {
         }
 
         if (!$this->isValidTransactions($block)) {
+            var_dump('[Blockchain] [add] [ERROR] : ' . $block->getHeight());
             return false;
         }
 
@@ -462,6 +516,7 @@ class Blockchain {
             }
 
             if (!$this->isValidTransactions($block)) {
+                var_dump('[Blockchain] [add] [ERROR] : ' . $block->getHeight());
                 return false;
             }
 
@@ -589,6 +644,7 @@ class Blockchain {
                 }
 
                 if ($hardScan && !$this->isValidTransactions($block)) {
+                    var_dump('[Blockchain] [add] [ERROR] Block: ' . $block->getHeight());
                     return false;
                 }
 

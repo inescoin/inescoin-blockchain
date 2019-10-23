@@ -112,6 +112,9 @@ class ESTodoService extends ESService
 			        'blockHeight' => [
 			          'type' => 'long',
 			        ],
+			        'amount' => [
+			          'type' => 'text',
+			        ],
 			        'transactionHash' => [
 			          'type' => 'text',
 			        ],

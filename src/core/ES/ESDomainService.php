@@ -37,7 +37,6 @@ class ESDomainService extends ESService
 		}
 
 		$addresses = implode(' OR ', $addressList);
-		var_dump($addresses);
 		try {
 			$result = $this->search([
 				'ownerAddress' => $addresses
@@ -119,6 +118,9 @@ class ESDomainService extends ESService
 			          'type' => 'text',
 			        ],
 			        'blockHeight' => [
+			          'type' => 'long'
+			        ],
+			        'blockHeightEnd' => [
 			          'type' => 'long'
 			        ],
 			        'transsactionHash' => [

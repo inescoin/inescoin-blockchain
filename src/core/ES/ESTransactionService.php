@@ -291,6 +291,9 @@ class ESTransactionService extends ESService
 			        'toDo' => [
 			          'type' => 'text'
 			        ],
+			        'toDoHash' => [
+			          'type' => 'text'
+			        ],
 		    	],
 		  	],
 		];

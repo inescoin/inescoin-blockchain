@@ -115,6 +115,7 @@ class ESBlockService extends ESService
 						"blockHeight" => $block['height'],
 						"from" => $transaction['from'],
 						"toDo" => base64_decode($transaction['toDo']),
+						"toDoHash" => $transaction['toDoHash'],
 						"transfers" => $transaction['transfers'],
 						"amount" => $transaction['amount'],
 						"amountWithFee" => $transaction['amountWithFee'],
@@ -297,10 +298,11 @@ class ESBlockService extends ESService
 		            	foreach ($toDos as $toDo) {
 		            		if (isset($toDo['hash'])) {
 		            			$_todo = json_encode($toDo);
-			            		$toDoInTransaction[$toDo['hash'] . '-' . md5($_todo)] = [
+			            		$toDoInTransaction[$toDo['hash'] . '-' . md5($_todo) . '-' . $transaction['hash']] = [
 			            			'hash' => $toDo['hash'],
-			            			'command' => json_encode($toDo),
+			            			'command' => $_todo,
 			            			'blockHeight' => $block['height'],
+			            			'amount' => $transaction['amount'],
 			            			'transactionHash' => $transaction['hash'],
 			            			'ownerAddress' => $transaction['from'],
 			            			'ownerPublicKey' => $transaction['publicKey'],

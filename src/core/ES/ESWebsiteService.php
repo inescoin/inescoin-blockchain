@@ -25,6 +25,17 @@ class ESWebsiteService extends ESService
 		parent::__construct();
 	}
 
+	public function getByUrl($url)
+	{
+		$response = $this->get($url);
+
+		if (isset($response['error'])) {
+            return [];
+        }
+
+        return $response['_source'];
+	}
+
 	public function getByAddress($addressList = BlockchainConfig::NAME, $size = 100, $page = 0)
 	{
 		$from = 0;
@@ -37,7 +48,6 @@ class ESWebsiteService extends ESService
 		}
 
 		$addresses = implode(' OR ', $addressList);
-		var_dump($addresses);
 		try {
 			$result = $this->search([
 				'ownerAddress' => $addresses

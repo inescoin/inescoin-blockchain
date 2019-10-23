@@ -96,7 +96,7 @@ class ESBlockchainProvider {
 		return $this->todoService;
 	}
 
-	public function resetAll($heigth) {
+	public function resetAll($heigth = 0) {
 		if (!$heigth) {
 			$this->blockService->reset();
 			$this->transactionService->reset();
@@ -112,6 +112,10 @@ class ESBlockchainProvider {
 			$this->transferPoolService->reset();
 		} else {
 			$this->blockService->deleteByQuery($heigth);
+
+			$this->todoService->deleteByQuery($heigth, 'blockHeight');
+			$this->domainService->deleteByQuery($heigth, 'blockHeight');
+			$this->websiteService->deleteByQuery($heigth, 'blockHeight');
 		}
 
 	}

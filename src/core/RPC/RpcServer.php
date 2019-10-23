@@ -254,6 +254,22 @@ final class RpcServer
                         $this->cache->setCache($key, $response);
                         return new JsonResponse($response);
 
+                    case 'get-domain-url':
+                        $url = isset($data['url']) ? $data['url'] : null;
+                        if (null === $url) {
+                            return new JsonResponse([]);
+                        }
+
+                        $response = $this->cache->getCache($key);
+                        if ($response) {
+                            return new JsonResponse($response);
+                        }
+
+                        $response = $this->node->getBlockchain()->getDomainByUrl($url);
+
+                        $this->cache->setCache($key, $response);
+                        return new JsonResponse($response);
+
                     case 'get-wallet-addresses-domain':
                         $page = isset($data['page']) ? (int) $data['page'] : 1;
                         $walletAddresses = isset($data['walletAddresses']) ? $data['walletAddresses'] : null;

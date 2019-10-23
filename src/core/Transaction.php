@@ -35,6 +35,7 @@ class Transaction {
 	private $limitTransfers = 50;
     private $transfers = [];
     private $toDo = [];
+    private $toDoHash = '';
 
 	public function __construct($privateKey = null, $prefix = '')
 	{
@@ -68,15 +69,15 @@ class Transaction {
 
     public function addToDo($toDo)
 	{
-		// namespace: 'domain'
-		// action: 'create|update|delete'
-		// type: 'url|roles|meta|schema|data'
+		// action: 'create|renew|update|delete'
 		// body: {}
 		if (is_array($toDo)) {
 			$this->toDo = $toDo;
 		} else {
 			$this->toDo = [$toDo];
 		}
+
+		$this->toDoHash = Pow::hash(($this->getToDo()));
 	}
 
 	public function addTransfers($transfers, $nonce = false)
@@ -181,14 +182,11 @@ class Transaction {
         	$createdAt = $this->createdAt;
         }
 
-    	$toDo = $this->getToDo();
-    	$toDo = $toDo === 'W10=' ? '' : $toDo;
-
         return Pow::hash(
         	$this->bankHash
         	. $this->configHash
         	. $this->from
-        	. $toDo
+        	. $this->toDoHash
         	. $this->getTransfers()
         	. $this->amount
         	. $createdAt
@@ -204,6 +202,7 @@ class Transaction {
 			'from' => $this->from,
 			'transfers' => $this->getTransfers(),
 			'toDo' => $this->getToDo(),
+			'toDoHash' => $this->toDoHash,
 			'amount' => $this->amount,
 			'fee' => $this->fee,
 			'createdAt' => $this->createdAt,
@@ -282,6 +281,7 @@ class Transaction {
 		$this->from = isset($data['from']) ? (string) $data['from'] : $this->from;
 		$this->transfers = isset($data['transfers']) ? $data['transfers'] : $this->transfers;
 		$this->toDo = isset($data['toDo']) ? $data['toDo'] : $this->toDo;
+		$this->toDoHash = isset($data['toDoHash']) ? $data['toDoHash'] : $this->toDoHash;
 		$this->amount = isset($data['amount']) ? (int) $data['amount'] : $this->amount;
 		$this->fee = isset($data['fee']) ? (int) $data['fee'] : $this->fee;
 		$this->amountWithFee = isset($data['amountWithFee']) ? (int) $data['amountWithFee'] : NULL;
@@ -312,6 +312,54 @@ class Transaction {
 
 	public function isValid($checkTransfers = false)
 	{
+
+		if (!empty($this->toDo) && $this->toDo !== 'W10=') {
+			$_todo = @json_decode(base64_decode($this->toDo), true);
+			if (!$_todo) {
+				var_dump('ERROR: Bad todo format');
+				return false;
+			}
+
+			$_todo = $_todo[0];
+
+	        $action = $_todo['action'];
+			$url = strtolower($_todo['name']);
+
+	        if ($action !== 'update' && !($this->amount === 99999000000 || $this->amount === 199999000000 || $this->amount === 299999000000)) {
+	            var_dump('ERROR: Bad domain amount: ' . $this->amount);
+				return false;
+	        }
+
+	        if ($action === 'update' && $_todo['amount'] !== 999000000) {
+	            var_dump('ERROR: Bad domain amount 2');
+				return false;
+	        }
+
+	        if (!ctype_alnum($url)) {
+	        	var_dump('ERROR: Domain name not alphanumeric: ' . $url);
+				return false;
+	        }
+
+	        if (strlen($url) < 7) {
+	        	var_dump('ERROR: Domain name too small < 7');
+				return false;
+	        }
+
+	        if (strlen($url) > 70) {
+	        	var_dump('ERROR: Domain name too big > 70');
+				return false;
+	        }
+
+	        if ($action === 'create') {
+	            $domainExists = $this->es->domainService()->exists($url);
+	            var_dump($domainExists);
+	            if ($domainExists) {
+	                var_dump('ERROR: Domain already exists');
+					return false;
+	            }
+	        }
+	    }
+
 		if (!$this->isValidTransfers()) {
 			var_dump('ERROR: Invalid transfers');
 			return false;
@@ -445,6 +493,7 @@ class Transaction {
 			'from' => $this->from,
 			'transfers' => $this->getTransfers(),
 			'toDo' => $this->getToDo(),
+			'toDoHash' => $this->toDoHash,
 			'amount' => $this->amount,
 			'amountWithFee' => $this->amountWithFee,
 			'fee' => $this->fee,
