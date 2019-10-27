@@ -22,6 +22,9 @@ class ESDomainService extends ESService
 	public function __construct($prefix = '') {
 		$this->logger = (LoggerService::getInstance())->getLogger();
 		$this->index = $prefix ? $prefix . '_' . $this->index : $this->index;
+
+		$this->transactionService = ESService::getInstance('transaction', $prefix);
+
 		parent::__construct();
 	}
 
@@ -58,6 +61,19 @@ class ESDomainService extends ESService
 		$output['total'] = $result['hits']['total']['value'];
 
 		return $output;
+	}
+
+	public function getByUrl($url)
+	{
+		$response = $this->get($url);
+
+		if (isset($response['error'])) {
+            return [];
+        }
+
+        $domain = $response['_source'];
+        $domain['transactions'] = $this->transactionService->getByDomainUrl($url);
+        return $domain;
 	}
 
 

@@ -147,6 +147,10 @@ class Blockchain {
         return $this->es->websiteService()->getByUrl($url);;
     }
 
+    public function getDomainInfoByUrl($url = null) {
+        return $this->es->domainService()->getByUrl($url);;
+    }
+
     public function getAddressBalances($addressList = []) {
         return $this->es->bankService()->getAddressBalances($addressList);;
     }
@@ -219,7 +223,7 @@ class Blockchain {
 
             if ($action !== 'update' && !($amount === 99999000000 || $amount === 199999000000 || $amount === 299999000000)) {
                 return [
-                    'error' => 'Bad domain amount'
+                    'error' => 'Bad domain amount: ' . $amount
                 ];
             }
 
@@ -249,11 +253,34 @@ class Blockchain {
 
             if ($action === 'create') {
                 $domainExists = $this->es->domainService()->exists($url);
-                var_dump($domainExists);
                 if ($domainExists) {
                     return [
                         'error' => 'Domain already exists'
                     ];
+                }
+            }
+
+            if ($action !== 'create') {
+                $domainExists = $this->es->domainService()->exists($url);
+                if (!$domainExists) {
+                    return [
+                        'error' => 'Domain not found'
+                    ];
+                }
+
+                if ($action !== 'renew') {
+                    $domain = $this->es->domainService()->getByUrl($url);
+                    if ($domain['ownerAddress'] !== $data['from']) {
+                        return [
+                            'error' => 'Action not authorized, ownerAddress not same'
+                        ];
+                    }
+
+                    if ($domain['ownerPublicKey'] !== $data['publicKey']) {
+                        return [
+                            'error' => 'Action not authorized, ownerPublicKey not same'
+                        ];
+                    }
                 }
             }
         }
@@ -296,7 +323,7 @@ class Blockchain {
             ];
         }
 
-        if ($transaction->isValid()) {
+        if ($transaction->isValid(true, true)) {
             $mTransaction = $transaction->getInfos();
             $this->transactionPool[$mTransaction['hash']] = $mTransaction;
 
@@ -688,7 +715,7 @@ class Blockchain {
             $transaction = new Transaction(null, $this->prefix);
             $transaction->setData((array) $_transation);
 
-            if (!$transaction->isValid()) {
+            if (!$transaction->isValid(true, true)) {
                 return false;
             }
 

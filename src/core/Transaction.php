@@ -43,6 +43,7 @@ class Transaction {
 
 		$this->configHash = BlockchainConfig::getHash();
 		$this->bankService = ESService::getInstance('bank', $prefix);
+		$this->domainService = ESService::getInstance('domain', $prefix);
 	}
 
 	public function getFrom()
@@ -310,9 +311,8 @@ class Transaction {
 		return $this;
 	}
 
-	public function isValid($checkTransfers = false)
+	public function isValid($checkTransfers = false, $isWeb = false)
 	{
-
 		if (!empty($this->toDo) && $this->toDo !== 'W10=') {
 			$_todo = @json_decode(base64_decode($this->toDo), true);
 			if (!$_todo) {
@@ -330,7 +330,7 @@ class Transaction {
 				return false;
 	        }
 
-	        if ($action === 'update' && $_todo['amount'] !== 999000000) {
+	        if ($action === 'update' && $this->amount !== 999000000) {
 	            var_dump('ERROR: Bad domain amount 2');
 				return false;
 	        }
@@ -351,16 +351,40 @@ class Transaction {
 	        }
 
 	        if ($action === 'create') {
-	            $domainExists = $this->es->domainService()->exists($url);
+	            $domainExists = $this->domainService->exists($url);
 	            var_dump($domainExists);
 	            if ($domainExists) {
 	                var_dump('ERROR: Domain already exists');
 					return false;
 	            }
 	        }
+
+	        if ($action !== 'create') {
+                $domainExists = $this->domainService->exists($url);
+                if (!$domainExists) {
+                    return [
+                        'error' => 'Domain not found'
+                    ];
+                }
+
+                if ($action !== 'renew') {
+	                $domain = $this->domainService->getByUrl($url);
+	                if ($domain['ownerAddress'] !== $data['from']) {
+	                    return [
+	                        'error' => 'Action not authorized, ownerAddress not same'
+	                    ];
+	                }
+
+	                if ($domain['ownerPublicKey'] !== $data['publicKey']) {
+	                    return [
+	                        'error' => 'Action not authorized, ownerPublicKey not same'
+	                    ];
+	                }
+	            }
+            }
 	    }
 
-		if (!$this->isValidTransfers()) {
+		if (!$this->isValidTransfers($isWeb)) {
 			var_dump('ERROR: Invalid transfers');
 			return false;
 		}
@@ -409,11 +433,11 @@ class Transaction {
 		return true;
 	}
 
-	public function isValidTransfers() {
+	public function isValidTransfers($isWeb = false) {
 		$transfers = $this->getTransfersJson();
 
 		$validMiners = [];
-		if ($this->coinbase) {
+		if ($this->coinbase || $isWeb) {
 			$validMiners = explode('|', BlockchainConfig::AUTHORIZED_MINERS);
 		}
 
@@ -425,8 +449,8 @@ class Transaction {
 		foreach ($transfers as $transfer) {
 			$transfer = (array) $transfer;
 
-			if ($this->coinbase && !in_array($transfer['to'], $validMiners)) {
-				var_dump('ERROR: [coinbase] Invalid address =>' . $transfer['to'] . ' excepeted => ' . BlockchainConfig::AUTHORIZED_MINERS);
+			if (($this->coinbase || $isWeb) && !in_array($transfer['to'], $validMiners)) {
+				var_dump('ERROR: [coinbase] Invalid address => ' . $transfer['to'] . ' excepeted => ' . BlockchainConfig::AUTHORIZED_MINERS);
 				return false;
 			}
 

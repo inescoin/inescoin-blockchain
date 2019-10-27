@@ -160,7 +160,6 @@ while (true) {
 
 			$upExec = [
 				'blockHeightEnd' => $exec['blockHeightEnd'],
-				'transactionHash' => $exec['transactionHash']
 			];
 
 			$updateDomain = $esService->domainService()->update($exec['url'], $upExec);
@@ -191,7 +190,7 @@ while (true) {
 				continue;
 			}
 
-			var_dump('[SUCCESS] [delete] ' . $todo['_id']);
+			var_dump('[SUCCESS] [delete] ' . $todo['_id'], $exec);
 			$esService->todoService()->delete($todo['_id']);
 		}
 

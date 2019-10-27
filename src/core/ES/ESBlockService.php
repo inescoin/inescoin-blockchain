@@ -298,6 +298,10 @@ class ESBlockService extends ESService
 		            	foreach ($toDos as $toDo) {
 		            		if (isset($toDo['hash'])) {
 		            			$_todo = json_encode($toDo);
+
+			            		$transactionsList[$transaction['hash']]['url'] = $toDo['name'];
+			            		$transactionsList[$transaction['hash']]['urlAction'] = $toDo['action'];
+
 			            		$toDoInTransaction[$toDo['hash'] . '-' . md5($_todo) . '-' . $transaction['hash']] = [
 			            			'hash' => $toDo['hash'],
 			            			'command' => $_todo,

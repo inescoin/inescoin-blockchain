@@ -179,6 +179,44 @@ class ESTransactionService extends ESService
 		return $transaction;
 	}
 
+	public function getByDomainUrl($url)
+	{
+		try {
+			$result = $this->client->search([
+			    'index' => $this->index,
+			    'type' => $this->type,
+			    "from" => 0,
+			    "size" => 300,
+			    'body' => [
+			        'query' => [
+			            'match' => [
+			            	'url' => $url
+			            ]
+			        ],
+			        "sort" => [
+				    	"blockHeight" => "desc"
+				  	],
+			    ]
+			]);
+ 		} catch (\Exception $e) {
+			$result['error'] = $e->getMessage();
+			// var_dump('ERROR --> ' . $response['error']);
+		}
+
+		if (isset($result['error']) || !isset($result['hits']['hits'][0])) {
+			return [];
+		}
+
+		$output = [];
+		foreach ($result['hits']['hits'] as $hit) {
+			$transaction = $hit['_source'];
+			$transaction['toDo'] = base64_encode($transaction['toDo']);
+			$output[] = $transaction;
+		}
+
+		return $output;
+	}
+
 	public function count()
 	{
 		try {
@@ -292,6 +330,12 @@ class ESTransactionService extends ESService
 			          'type' => 'text'
 			        ],
 			        'toDoHash' => [
+			          'type' => 'text'
+			        ],
+			        'url' => [
+			          'type' => 'text'
+			        ],
+			        'urlAction' => [
 			          'type' => 'text'
 			        ],
 		    	],

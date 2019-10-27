@@ -120,6 +120,12 @@ class ESTransactionPoolService extends ESService
 			        'toDoHash' => [
 			          'type' => 'text'
 			        ],
+			        'url' => [
+			          'type' => 'text'
+			        ],
+			        'urlAction' => [
+			          'type' => 'text'
+			        ],
 		    	],
 		  	],
 		];
