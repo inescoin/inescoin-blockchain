@@ -369,13 +369,13 @@ class Transaction {
 
                 if ($action !== 'renew') {
 	                $domain = $this->domainService->getByUrl($url);
-	                if ($domain['ownerAddress'] !== $data['from']) {
+	                if ($domain['ownerAddress'] !== $this->from) {
 	                    return [
 	                        'error' => 'Action not authorized, ownerAddress not same'
 	                    ];
 	                }
 
-	                if ($domain['ownerPublicKey'] !== $data['publicKey']) {
+	                if ($domain['ownerPublicKey'] !== $this->publicKey) {
 	                    return [
 	                        'error' => 'Action not authorized, ownerPublicKey not same'
 	                    ];

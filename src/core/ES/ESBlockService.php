@@ -114,8 +114,8 @@ class ESBlockService extends ESService
 						"bankHash" => $transaction['bankHash'],
 						"blockHeight" => $block['height'],
 						"from" => $transaction['from'],
-						"toDo" => base64_decode($transaction['toDo']),
-						"toDoHash" => $transaction['toDoHash'],
+						"toDo" => isset($transaction['toDo']) ? base64_decode($transaction['toDo']) : '',
+						"toDoHash" => isset($transaction['toDoHash']) ? $transaction['toDoHash'] : '',
 						"transfers" => $transaction['transfers'],
 						"amount" => $transaction['amount'],
 						"amountWithFee" => $transaction['amountWithFee'],
@@ -288,32 +288,33 @@ class ESBlockService extends ESService
 		            	$jsonTranfserList = $jsonTranfserList ? $jsonTranfserList : (object) [];
 		            	$transactionsList[$transaction['hash']]['transfers'] = $jsonTranfserList;
 
-		            	if (is_string($transaction['toDo'])) {
-		            		$toDos = (array) json_decode(base64_decode($transaction['toDo']), true);
-		            	} else {
-		            		$toDos = $transaction['toDo'];
-		            	}
+		            	if (isset($transaction['toDo'])) {
+			            	if (is_string($transaction['toDo'])) {
+			            		$toDos = (array) json_decode(base64_decode($transaction['toDo']), true);
+			            	} else {
+			            		$toDos = $transaction['toDo'];
+			            	}
 
+			            	foreach ($toDos as $toDo) {
+			            		if (isset($toDo['hash'])) {
+			            			$_todo = json_encode($toDo);
 
-		            	foreach ($toDos as $toDo) {
-		            		if (isset($toDo['hash'])) {
-		            			$_todo = json_encode($toDo);
+				            		$transactionsList[$transaction['hash']]['url'] = $toDo['name'];
+				            		$transactionsList[$transaction['hash']]['urlAction'] = $toDo['action'];
 
-			            		$transactionsList[$transaction['hash']]['url'] = $toDo['name'];
-			            		$transactionsList[$transaction['hash']]['urlAction'] = $toDo['action'];
+				            		$toDoInTransaction[$toDo['hash'] . '-' . md5($_todo) . '-' . $transaction['hash']] = [
+				            			'hash' => $toDo['hash'],
+				            			'command' => $_todo,
+				            			'blockHeight' => $block['height'],
+				            			'amount' => $transaction['amount'],
+				            			'transactionHash' => $transaction['hash'],
+				            			'ownerAddress' => $transaction['from'],
+				            			'ownerPublicKey' => $transaction['publicKey'],
+				            			'createdAt' => time()
+				            		];
+			            		}
 
-			            		$toDoInTransaction[$toDo['hash'] . '-' . md5($_todo) . '-' . $transaction['hash']] = [
-			            			'hash' => $toDo['hash'],
-			            			'command' => $_todo,
-			            			'blockHeight' => $block['height'],
-			            			'amount' => $transaction['amount'],
-			            			'transactionHash' => $transaction['hash'],
-			            			'ownerAddress' => $transaction['from'],
-			            			'ownerPublicKey' => $transaction['publicKey'],
-			            			'createdAt' => time()
-			            		];
-		            		}
-
+			            	}
 		            	}
 		            } else {
 						var_dump("[ESBlockService] [bulkBlocks] Invalid amount spent: address => " . $addressFrom . " | amount => " . $transaction['amount'] . " | Height => " . $block['height']);
