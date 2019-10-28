@@ -925,7 +925,7 @@ For any reason you can reset or cut your blockchain from height (0 for all)
     composer install
   ```
 
-    10. Run inescoin website viewer http://localhost:8001
+    11. Run inescoin website viewer http://localhost:8001
   ```
     docker exec -it inescoin-website-viewer-phpfpm bash
 
@@ -934,12 +934,12 @@ For any reason you can reset or cut your blockchain from height (0 for all)
     composer install
   ```
 
-  11. Replace remote node ip by inescoin-node (container name)
+  12. Replace remote node ip by inescoin-node (container name)
   ```
     sed -i 's#https:\/\/node.inescoin.org\/#http:\/\/inescoin-node:8087\/#g' /www/src/app/App.php
   ```
 
-  12. Kibana
+  13. Kibana
   ```
     Open in browser: http://localhost:5608/
   ```
