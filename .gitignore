@@ -3,3 +3,6 @@
 /cache
 /messenger/node_modules/
 /messenger/logs/
+src/cache/
+src/moonairr.*
+src/inescoin*

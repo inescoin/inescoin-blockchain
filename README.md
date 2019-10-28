@@ -863,6 +863,7 @@ For any reason you can reset or cut your blockchain from height (0 for all)
     git clone git@github.com:inescoin/inescoin-blockchain.git
     git clone git@github.com:inescoin/inescoin-wallet.git
     git clone git@github.com:inescoin/inescoin-explorer.git
+    git clone git@github.com:inescoin/inescoin-website-viewer.git
 
   ```
 
@@ -919,7 +920,16 @@ For any reason you can reset or cut your blockchain from height (0 for all)
   ```
     docker exec -it inescoin-explorer-phpfpm bash
 
-    # root@inescoin-node:/#
+    # root@phpfpm:/#
+    cd /www/
+    composer install
+  ```
+
+    10. Run inescoin website viewer http://localhost:8001
+  ```
+    docker exec -it inescoin-website-viewer-phpfpm bash
+
+    # root@phpfpm:/#
     cd /www/
     composer install
   ```
@@ -929,7 +939,7 @@ For any reason you can reset or cut your blockchain from height (0 for all)
     sed -i 's#https:\/\/node.inescoin.org\/#http:\/\/inescoin-node:8087\/#g' /www/src/app/App.php
   ```
 
-  12. Kibana 
+  12. Kibana
   ```
     Open in browser: http://localhost:5608/
   ```
