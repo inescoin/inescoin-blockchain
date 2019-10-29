@@ -5,7 +5,7 @@
         "cli-color": "^1.4.0",
         "dateformat": "^3.0.3",
         "ent": "~0.1.0",
-        "express": "~3.3.4",
+        "express": "~4.17.1",
         "lodash": "^4.17.15",
         "socket.io": "~1.2.1"
     },
