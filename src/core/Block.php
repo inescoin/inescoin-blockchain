@@ -338,7 +338,7 @@ class Block
 
         $genesisBlock->setMerkelRoot($merkelRoot);
         $genesisBlockHash = Block::calculateHashFromArray($genesisBlock->getInfos());
-
+        // var_dump($genesisBlockHash); exit();
         return $genesisBlock;
     }
 
