@@ -222,7 +222,8 @@ class ESTransactionService extends ESService
 		try {
 			$result = $this->client->count([
 			    'index' => $this->index,
-			    'type' => $this->type
+			    'type' => $this->type,
+			    'ignore_unavailable' => true
 			]);
 		} catch (\Exception $e) {
 			$result['error'] = $e->getMessage();
