@@ -215,6 +215,7 @@ class Blockchain {
         }
 
         $todo = @json_decode(base64_decode($data['toDo']), true);
+        $isWeb = false;
         if ($todo && !empty($todo)) {
             $_todo = $todo[0];
             $action = $_todo['action'];
@@ -283,6 +284,8 @@ class Blockchain {
                     }
                 }
             }
+
+            $isWeb = true;
         }
 
         $transaction = new Transaction(null, $this->prefix);
@@ -323,7 +326,7 @@ class Blockchain {
             ];
         }
 
-        if ($transaction->isValid(true, true)) {
+        if ($transaction->isValid(true, $isWeb)) {
             $mTransaction = $transaction->getInfos();
             $this->transactionPool[$mTransaction['hash']] = $mTransaction;
 
@@ -614,6 +617,7 @@ class Blockchain {
         $this->es->transferService()->reset()->initIndex();
         $this->es->transactionPoolService()->reset()->initIndex();
         $this->es->transferService()->reset()->initIndex();
+        $this->es->transferPoolService()->reset()->initIndex();
         $this->es->todoService()->reset()->initIndex();
         $this->es->domainService()->reset()->initIndex();
 

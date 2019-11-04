@@ -313,6 +313,7 @@ class Transaction {
 
 	public function isValid($checkTransfers = false, $isWeb = false)
 	{
+		$isWeb = false;
 		if (!empty($this->toDo) && $this->toDo !== 'W10=') {
 			$_todo = @json_decode(base64_decode($this->toDo), true);
 			if (!$_todo) {
@@ -382,9 +383,11 @@ class Transaction {
 	                }
 	            }
             }
+
+            $isWeb = true;
 	    }
 
-		if (!$this->isValidTransfers($isWeb)) {
+		if ($checkTransfers && !$this->isValidTransfers($isWeb)) {
 			var_dump('ERROR: Invalid transfers');
 			return false;
 		}
@@ -423,10 +426,6 @@ class Transaction {
 
 		if (!$this->coinbase && !PKI::ecVerify($this->getHash(), $this->signature, $this->publicKey)) {
 			var_dump('ERROR: Invalid signature', $this->getInfos());
-			return false;
-		}
-
-		if ($checkTransfers && !$this->isValidTransfers()) {
 			return false;
 		}
 
