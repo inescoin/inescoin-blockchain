@@ -25,7 +25,7 @@ $prefix = $params['prefix'] ?? BlockchainConfig::NAME;
 $walletFile = $params['wallet-file'] ?? '' ;
 $walletPassword = $params['wallet-password'] ?? '' ;
 $dataFolder = $params['data-folder'] ?? './';
-$nodeAddress = $params['node-address'] ?? '62.210.92.159:8087';
+$nodeAddress = $params['node-address'] ?? '188.165.211.215:8087';
 $nodeProtocol = $params['node-protocol'] ?? 'http';
 $helpMe = array_key_exists('help', $params);
 
