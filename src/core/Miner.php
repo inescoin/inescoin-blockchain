@@ -144,7 +144,7 @@ final class Miner
             }
         }
 
-        sleep(5);
+        sleep(30);
         var_dump([
             'error' => 'Rejected block'
         ]);

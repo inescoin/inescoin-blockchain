@@ -608,7 +608,7 @@ class ESBlockService extends ESService
 
 	public function getLastBlocks($size = 1, $asArray = false, $page = 1)
 	{
-		$this->logger->info('[ESBlockService][getLastBlock] Index: ' . $this->index . '  | Type: ' . $this->type);
+		$this->logger->info('[ESBlockService][getLastBlocks] Index: ' . $this->index . '  | Type: ' . $this->type);
 
 		$from = 0;
 		if ($page > 1) {
