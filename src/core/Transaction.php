@@ -37,6 +37,8 @@ class Transaction {
     private $toDo = [];
     private $toDoHash = '';
 
+    private $waletIdSize = 20;
+
 	public function __construct($privateKey = null, $prefix = '')
 	{
 		$this->privateKey = $privateKey;
@@ -96,7 +98,7 @@ class Transaction {
 						if (isset($transfer['walletId'])) {
 							$walletId = str_replace(['_','-', ' '], '', $transfer['walletId']);
 							$walletId = ctype_alnum($walletId)
-								? substr($transfer['walletId'], 0, 10)
+								? substr($transfer['walletId'], 0, $this->waletIdSize)
 								: '';
 						}
 
@@ -461,8 +463,8 @@ class Transaction {
 				return false;
 			}
 
-			if (!empty($walletId) && strlen($walletId) > 10) {
-				var_dump('ERROR: Wallet Id limit 10, found =>' . strlen($walletId));
+			if (!empty($walletId) && strlen($walletId) > $this->waletIdSize) {
+				var_dump('ERROR: Wallet Id limit ' . $this->waletIdSize . ', found =>' . strlen($walletId));
 				return false;
 			}
 

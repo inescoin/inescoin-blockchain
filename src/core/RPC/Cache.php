@@ -14,9 +14,9 @@ class Cache {
 
 	public $cacheFolder = './cache/';
 
-	public $cacheClearTimer = 90;
+	public $cacheClearTimer = 900;
 
-	public $cacheTimeout = 10;
+	public $cacheTimeout = 60;
 
 	public function __construct($prefix = 'bob')
 	{
