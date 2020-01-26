@@ -103,7 +103,7 @@ final class RpcServer
                             return new JsonResponse($response);
                         }
 
-                        $response = $this->node->getPeers();
+                        $response = $this->node->getBlockchain()->es->peerService()->getRemoteAddresses();
 
                         $this->cache->setCache($key, $response);
                         return new JsonResponse($response);
@@ -142,6 +142,22 @@ final class RpcServer
                 $data = (array) json_decode($request->getBody()->getContents(), true);
                 $key = md5('POST-' . $request->getUri()->getPath() . '-' . serialize($data));
                 switch ($uri) {
+                    case 'get-blocks-by-height':
+                        $response = $this->cache->getCache($key);
+                        if ($response) {
+                            return new JsonResponse($response);
+                        }
+
+                        $height = isset($data['height']) ? (int) $data['height'] : 0;
+                        $limit = isset($data['limit']) ? (int) $data['limit'] : 100;
+                        $toBlockHeight = $height + $limit;
+
+                        $original = array_key_exists('original', $data);
+
+                        $response = $this->node->getBlockchain()->es->blockService()->getChain($height, $toBlockHeight, false, true);
+
+                        $this->cache->setCache($key, $response);
+                        return new JsonResponse($response);
                     case 'get-blocks':
                         $response = $this->cache->getCache($key);
                         if ($response) {
@@ -150,7 +166,8 @@ final class RpcServer
 
                         $page = isset($data['page']) ? (int) $data['page'] : 1;
                         $limit = isset($data['limit']) ? (int) $data['limit'] : 100;
-                        $response = $this->node->getLastBlocks($limit, $page);
+                        $original = array_key_exists('original', $data);
+                        $response = $this->node->getLastBlocks($limit, $page, $original);
 
                         $this->cache->setCache($key, $response);
                         return new JsonResponse($response);

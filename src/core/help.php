@@ -21,6 +21,19 @@ Options:
   --prefix=<prefix>    Blockchain prefix (" . BlockchainConfig::NAME . ")
   ". PHP_EOL;
 
+$help['sync'] = "
+" . ucfirst(BlockchainConfig::NAME) . " [" . strtoupper(BlockchainConfig::SYMBOL). "] v". BlockchainConfig::VERSION ."
+
+Usage:
+  bin/" . BlockchainConfig::NAME . "-sync --help
+  bin/" . BlockchainConfig::NAME . "-sync --prefix=" . BlockchainConfig::NAME . "
+
+Options:
+  --help               Show help console
+
+  --prefix=<prefix>    Blockchain prefix (" . BlockchainConfig::NAME . ")
+  ". PHP_EOL;
+
 $help['export'] = "
 " . ucfirst(BlockchainConfig::NAME) . " [" . strtoupper(BlockchainConfig::SYMBOL). "] v". BlockchainConfig::VERSION ."
 
@@ -35,7 +48,7 @@ Options:
 
   --file=<file>        TAR GZ file to export (./" . BlockchainConfig::NAME . ")
   --force              Remove archive file if exists
-	". PHP_EOL;
+  ". PHP_EOL;
 
 $help['import'] = "
 " . ucfirst(BlockchainConfig::NAME) . " [" . strtoupper(BlockchainConfig::SYMBOL). "] v". BlockchainConfig::VERSION ."
@@ -77,6 +90,10 @@ Usage:
   bin/" . BlockchainConfig::NAME . "-node --rpc-bind-ip=0.0.0.0 --data-folder=./ --rpc-bind-port=8087 --p2p-bind-port=3031 --network=MAINNET --prefix=bob
 Options:
   --help                         Show help console
+
+  --genesis                      Show genesis Hash and exit
+
+  --reset                        Reset and clean blockchain
 
   --prefix=<prefix>              Blockchain prefix (" . BlockchainConfig::NAME . ")
   --network=<network>            MAINNET or TESTNET

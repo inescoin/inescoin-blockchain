@@ -51,6 +51,16 @@ final class Miner
         if (!$lastBlock) {
             $lastBlock = Block::generateGenesisBlock($this->getBlockchain()->getPrefix());
         }
+
+        $height = $lastBlock->getHeight();
+        $previousHash = $lastBlock->getHash();
+        $previousBlockTxCount = $lastBlock->getCountTransaction();
+        $previousBlockCreatedAt = $lastBlock->getCreatedAt();
+        $previousCumulativeDifficulty = $lastBlock->getCumulativeDifficulty();
+
+
+
+
         $minerReward = $this->getBlockchain()->es->transactionService()->getMinerRewardAmount();
         $minerReward = $minerReward ? $minerReward : Block::MINER_REWARD;
 
@@ -59,19 +69,29 @@ final class Miner
             $difficulty = BlockchainConfig::MIN_DIFFICULTY;
         }
 
-        $height = $lastBlock->getHeight();
-        $previousHash = $lastBlock->getHash();
-        $previousCumulativeDifficulty = $lastBlock->getCumulativeDifficulty();
-
-        var_dump('[Miner] [previousCumulativeDifficulty] ----------------------> ' . $previousCumulativeDifficulty);
-
         $minerTransactionReward = (new Transaction(null, $this->getBlockchain()->getPrefix()))->generateCoinbaseTansaction($data['walletAddress'], $minerReward);
 
         $dataPool = $this->getBlockchain()->getDataPool();
-
         $dataPool[] = $minerTransactionReward->getInfos();
+        $countTransaction = count($dataPool);
+        var_dump('--- 1');
 
         $dataEncoded = Block::getDataEncoded($dataPool);
+        var_dump('--- 2');
+
+        // Check empty block timestamp
+        $timeLeft = time() - ($previousBlockCreatedAt + BlockchainConfig::NEXT_EMPTY_TIMESTAMP);
+        if ($countTransaction === 1 && $timeLeft < 0) {
+            $output['error'] = 'Time left for next empty block: ' . $timeLeft;
+            $output['timeLeft'] = $timeLeft * -1;
+            var_dump('Empty block');
+            return $output;
+        }
+
+        var_dump('--- 3', $timeLeft);
+
+        var_dump('[Miner] ----------------------> diff: ' . $previousCumulativeDifficulty);
+        var_dump('[Miner] ----------------------> tx: ' . $countTransaction);
 
         $output = [
             'id' => $data['walletAddress'],
@@ -82,6 +102,9 @@ final class Miner
             'height' => $height + 1,
             'createdAt' => (new DateTimeImmutable())->getTimestamp(),
             'previousHash' => $previousHash,
+            'countTransaction' => $countTransaction,
+            'previousBlockTxCount' => $previousBlockTxCount,
+            'previousBlockCreatedAt' => $previousBlockCreatedAt,
             'previousCumulativeDifficulty' => $previousCumulativeDifficulty,
             'merkleRoot' => MerkleTree::getRoot($dataPool)
         ];

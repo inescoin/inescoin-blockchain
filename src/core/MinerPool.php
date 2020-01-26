@@ -70,14 +70,24 @@ class MinerPool
 
 		    	$blockTemplate = @json_decode($blockTemplate);
 		    	if (!$blockTemplate) {
+		    		sleep(10);
 			    	continue;
 			    }
 
 			    $blockTemplate = (array) $blockTemplate;
+			    if (isset($blockTemplate['error'])) {
+			    	$timer = $blockTemplate['timeLeft'];
+	    			var_dump($timer . ' sec left for next empty block');
+	    			sleep(10);
+			    	continue;
+			    }
+
 	    		$difficulty = (int) $blockTemplate['difficulty'];
+	    		$txCount = $blockTemplate['countTransaction'] ?? 1;
 
 			    var_dump('[MinerPool] Get new block template at height => ' . $blockTemplate['height']);
 			    var_dump('[MinerPool] Miner start at difficulty => ' . $difficulty);
+			    var_dump('[MinerPool] Tx count => ' . $txCount);
 
 		    	$blockTemplate['nonce'] = 0;
 			    while (true) {

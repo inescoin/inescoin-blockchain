@@ -76,9 +76,9 @@ class Block
 
         $this->tempData = $data;
 
-        $this->countTransaction = $countData;
+        $this->countTransaction = $totalTransaction;
 
-        $this->countTotalTransaction = $totalTransaction + $this->countTransaction;
+        $this->countTotalTransaction = $totalTransaction;
 
         $this->data = self::getDataEncoded($data);
 
@@ -211,12 +211,15 @@ class Block
     {
         $transactions = [];
         $data = json_decode(base64_decode($this->data, true));
-        foreach ($data as $transaction) {
-            $transaction = (array) $transaction;
-            $transaction['transfers'] = json_decode(base64_decode($transaction['transfers']), true);
+        if (is_array($data)) {
+            foreach ($data as $transaction) {
+                $transaction = (array) $transaction;
+                $transaction['transfers'] = json_decode(base64_decode($transaction['transfers']), true);
 
-            $transactions[] = $transaction;
+                $transactions[] = $transaction;
+            }
         }
+
 
         return $transactions;
     }
@@ -313,7 +316,7 @@ class Block
         );
     }
 
-    public static function generateGenesisBlock($prefix = ''): self
+    public static function generateGenesisBlock($prefix = '', $showGenensisAndExit = false): self
     {
         $genesisTransaction = (new Transaction(null, $prefix))->generateGenesisTansaction(
             BlockchainConfig::GENESIS_MINER_ADDRESS,
@@ -333,12 +336,20 @@ class Block
             1,                                                                          // $difficulty
             0,                                                                          // $nonce
             0,                                                                          // $previousCumulativeDifficulty
-            0                                                                           // $totalTransaction
+            1                                                                           // $totalTransaction
         );
 
         $genesisBlock->setMerkelRoot($merkelRoot);
         $genesisBlockHash = Block::calculateHashFromArray($genesisBlock->getInfos());
-        // var_dump($genesisBlockHash); exit();
+        if ($showGenensisAndExit) {
+            echo PHP_EOL . 'Genesis hash: ' . $genesisBlockHash . PHP_EOL;
+            echo 'Config hash: ' . BlockchainConfig::getHash() . PHP_EOL;
+            echo 'Config: '. PHP_EOL;
+            foreach (BlockchainConfig::CONFIG as $key => $value) {
+                echo '----|  ' . $key . ' => ' . $value . PHP_EOL;
+            }
+            exit();
+        }
         return $genesisBlock;
     }
 
@@ -382,7 +393,21 @@ class Block
 
         // Check timestamp
         if ($block->getCreatedAt() < $this->createdAt + BlockchainConfig::NEXT_TIMESTAMP) {
+            $this->logger->error('[Block] [isNextValid] [..] !!! ERROR !!! Block->getCreatedAt() ' . $this->getHeight() . " <->  {$block->getHeight()} | {$this->createdAt} <-> {$block->getCreatedAt()}");
+            var_dump('[Block] [isNextValid] [..] !!! ERROR !!! Block->getCreatedAt() ' . $this->getHeight() . " <->  {$block->getHeight()} | {$this->createdAt} <-> {$block->getCreatedAt()}");
+            return false;
+        }
+
+        // Check empty block timestamp
+        if ($block->getCountTransaction() === 1 && $block->getCreatedAt() < $this->createdAt + BlockchainConfig::NEXT_EMPTY_TIMESTAMP) {
             $this->logger->error('[Block] [isNextValid] !!! ERROR !!! Block->getCreatedAt() ' . $this->getHeight() . " <->  {$block->getHeight()} | {$this->createdAt} <-> {$block->getCreatedAt()}");
+            var_dump('[Block] [isNextValid] [.] !!! ERROR !!! Block->getCreatedAt() ' . $this->getHeight() . " <->  {$block->getHeight()} | {$this->createdAt} <-> {$block->getCreatedAt()} | txCount: {$this->getCountTransaction()}");
+            var_dump($this->getInfos());
+            return false;
+        }
+
+        if ($block->getCountTransaction() === 0) {
+            var_dump('[Block] [isNextValid] [.00] !!! ERROR !!! Not transaction into block');
             return false;
         }
 
@@ -409,8 +434,6 @@ class Block
 
         return true;
     }
-
-
 
     public function getInfos(): array
     {
@@ -470,9 +493,12 @@ class Block
         $dataBase64 = (string) $block['data'];
         $difficulty = (int) $block['difficulty'];
         $nonce = (int) $block['nonce'];
-        $totalTransaction = isset($block['countTransaction']) ? (int) $block['countTransaction'] : 0;
-        $cumulativeDifficulty = isset($block['cumulativeDifficulty']) ? (int) $block['cumulativeDifficulty'] : 1;
 
+        $data = (array) json_decode(base64_decode($dataBase64));
+        // var_dump('xx-', $data);
+        $totalTransaction = isset($block['countTransaction']) ? (int) $block['countTransaction'] : count($data);
+
+        $cumulativeDifficulty = isset($block['cumulativeDifficulty']) ? (int) $block['cumulativeDifficulty'] : 1;
         $previousCumulativeDifficulty = $cumulativeDifficulty - ( 2 ** $difficulty);
 
         if (isset($block['previousCumulativeDifficulty'])) {

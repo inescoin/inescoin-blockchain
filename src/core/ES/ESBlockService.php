@@ -71,13 +71,20 @@ class ESBlockService extends ESService
         		'hash' => ''
 			];
 		} else {
-			// if ($resetMode && !isset($walletBank[BlockchainConfig::NAME])) {
-			// 	var_dump('[ESBlockService] [$walletBank] [$resetMode]');
-			// 	exit();
-			// }
+			if ($resetMode && !isset($walletBank[BlockchainConfig::NAME])) {
+				var_dump('[ESBlockService] [$walletBank] [$resetMode]');
+				exit();
+			}
 
-			$this->walletBank[BlockchainConfig::NAME] = $walletBank[BlockchainConfig::NAME];
-
+			if (isset($walletBank[BlockchainConfig::NAME])) {
+				$this->walletBank[BlockchainConfig::NAME] = $walletBank[BlockchainConfig::NAME];
+			}
+			else {
+				// $this->walletBank[BlockchainConfig::NAME] = [
+				// 	'amount' => 0,
+				// 	'hash' => '',
+				// ];
+			}
 		}
 
 		var_dump('[ESBlockService] Start bank import...');
@@ -130,9 +137,9 @@ class ESBlockService extends ESService
 					$blockFee += $transaction['fee'];
 
 					if ($transaction['coinbase'] && $transaction['from'] === BlockchainConfig::NAME) {
-						if ($block['height'] !== 0 && $this->walletBank[BlockchainConfig::NAME]['hash'] !== $transaction['bankHash']) {
+						if ($block['height'] !== 1 && $this->walletBank[BlockchainConfig::NAME]['hash'] !== '' && $this->walletBank[BlockchainConfig::NAME]['hash'] !== $transaction['bankHash']) {
 							var_dump('Bank Hash ERROR <---------------------------------------------> '. $block['height']);
-							var_dump('------------------  ' . $this->walletBank[BlockchainConfig::NAME]['hash'] .' <=> ' . $transaction['bankHash'] . ' ------------------');
+							var_dump('------------------  ' . $this->walletBank[BlockchainConfig::NAME]['hash'] .' <=> ' . $transaction['bankHash'] . ' ------------------', $transaction);
 							break 2;
 							// exit();
 						}
@@ -344,35 +351,35 @@ class ESBlockService extends ESService
 				$toDoInTransaction = [];
 			}
 
-			foreach ($addressBalanceFrom as $address => $trans) {
-				$amount = 0;
-				$height = 0;
-				$hash = '';
-				foreach ($trans as $data) {
-					$amount += $data['amount'];
-					$height = $block['height'];
-					$hash = $data['hash'];
-				}
-
-				if ($amount) {
-					var_dump('[ESBlockService] [bulkBlocks] --Decrement amount | Address: ' . $address . ' | Amount: -' . $amount . ' | Height: ' . $height . ' | Hash: ' . $hash);
-					$this->bankService->decrementAmount($address, $amount, $height, $hash);
-				}
-			}
-
 			foreach ($addressBalanceTo as $address => $trans) {
 				$amount = 0;
 				$height = 0;
 				$hash = '';
 				foreach ($trans as $data) {
 					$amount += $data['amount'];
-					$height = $block['height'];
+					$height = $data['blockHeight'];
 					$hash = $data['hash'];
 				}
 
 				if ($amount) {
 					var_dump('[ESBlockService] [bulkBlocks] ++Increment amount | Address: ' . $address . ' | Amount: +' . $amount . ' | Height: ' . $height . ' | Hash: ' . $hash);
 					$this->bankService->incrementAmount($address, $amount, $height, $hash);
+				}
+			}
+
+			foreach ($addressBalanceFrom as $address => $trans) {
+				$amount = 0;
+				$height = 0;
+				$hash = '';
+				foreach ($trans as $data) {
+					$amount += $data['amount'];
+					$height = $data['blockHeight'];
+					$hash = $data['hash'];
+				}
+
+				if ($amount) {
+					var_dump('[ESBlockService] [bulkBlocks] --Decrement amount | Address: ' . $address . ' | Amount: -' . $amount . ' | Height: ' . $height . ' | Hash: ' . $hash);
+					$this->bankService->decrementAmount($address, $amount, $height, $hash);
 				}
 			}
 
@@ -410,9 +417,8 @@ class ESBlockService extends ESService
 		return $asArray ? $block->getJsonInfos() : $block;
 	}
 
-	public function getChain($fromHeight, $toHeight, $formatted = true) {
+	public function getChain($fromHeight, $toHeight, $formatted = true, $original = false) {
 		$this->logger->info("[ESBlockService][getChain] fromHeight: $fromHeight | toHeight: $toHeight");
-
 		try {
 			$result = $this->client->search([
 			    'index' => $this->index,
@@ -443,8 +449,12 @@ class ESBlockService extends ESService
 
 		$output = [];
 		foreach ($result['hits']['hits'] as $hit) {
-			$block = $this->_toBlock($hit['_source']);
-			$output[] = $formatted ? $block : $block->getInfos();
+			if ($original) {
+				$output[] = $hit['_source'];
+			} else {
+				$block = $this->_toBlock($hit['_source']);
+				$output[] = $formatted ? $block : $block->getInfos();
+			}
 		}
 
 		return $output;
@@ -558,7 +568,7 @@ class ESBlockService extends ESService
 		return (int) $cumulativeDifficulty;
 	}
 
-	public function getLastBlock($size = 1, $asArray = false, $page = 1)
+	public function getLastBlock($size = 1, $asArray = false, $page = 1, $original = false)
 	{
 		$this->logger->info('[ESBlockService][getLastBlock] Index: ' . $this->index . '  | Type: ' . $this->type);
 
@@ -594,19 +604,26 @@ class ESBlockService extends ESService
 
 		$output = [];
 		if ($size === 1) {
-			$block = $this->_toBlock($result['hits']['hits'][0]['_source']);
-			$output = $asArray ? $block->getJsonInfos() : $block;
+			if ($original) {
+				$output = $result['hits']['hits'][0]['_source'];
+			} else {
+				$output = $asArray ? $block->getJsonInfos() : $this->_toBlock($result['hits']['hits'][0]['_source']);
+			}
 		} else {
 			foreach ($result['hits']['hits'] as $source) {
-				$block = $this->_toBlock($source['_source']);
-				$output[] = $asArray ? $block->getJsonInfos() : $block;
+				if ($original) {
+					$output[] = $source['_source'];
+				} else {
+					$block = $this->_toBlock($source['_source']);
+					$output[] = $asArray ? $block->getJsonInfos() : $block;
+				}
 			}
 		}
 
 		return $output;
 	}
 
-	public function getLastBlocks($size = 1, $asArray = false, $page = 1)
+	public function getLastBlocks($size = 1, $asArray = false, $page = 1, $original = false)
 	{
 		$this->logger->info('[ESBlockService][getLastBlocks] Index: ' . $this->index . '  | Type: ' . $this->type);
 
@@ -648,15 +665,21 @@ class ESBlockService extends ESService
 		$output['total'] = $result['hits']['total'];
 
 		if ($size === 1) {
-			$block = $this->_toBlock($result['hits']['hits'][0]['_source']);
-			$output = $asArray ? $block->getJsonInfos() : $block;
+			if ($original) {
+				$output = $result['hits']['hits'][0]['_source'];
+			} else {
+				$output = $asArray ? $block->getJsonInfos() : $this->_toBlock($result['hits']['hits'][0]['_source']);
+			}
 		} else {
 			foreach ($result['hits']['hits'] as $source) {
-				$block = $this->_toBlock($source['_source']);
-				$output['blocks'][] = $asArray ? $block->getJsonInfos() : $block;
+				if ($original) {
+					$output['blocks'][] = $source['_source'];
+				} else {
+					$block = $this->_toBlock($source['_source']);
+					$output['blocks'][] = $asArray ? $block->getJsonInfos() : $block;
+				}
 			}
 		}
-
 		return $output;
 	}
 

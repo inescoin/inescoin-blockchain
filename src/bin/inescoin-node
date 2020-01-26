@@ -32,21 +32,27 @@ $params = getopt('', [
 	'p2p-bind-ip::',
 	'p2p-bind-port::',
 	'data-folder::',
+	'genesis::',
+	'reset::',
+	'ssl::',
 	'prefix::',
 	'network::',
 	'help::',
 ]);
 
 
-$rpcBindIp 		= $params['rpc-bind-ip'] ?? '0.0.0.0' ;
-$rpcBindPort 	= $params['rpc-bind-port'] ?? 8086;
-$p2pBindIp 		= $params['p2p-bind-ip'] ?? '0.0.0.0';
-$p2pBindPort 	= $params['p2p-bind-port'] ?? 3030;
-$dataFolder 	= $params['data-folder'] ?? './';
-$prefix 		= $params['prefix'] ?? BlockchainConfig::NAME;
-$network 		= $params['network'] ?? 'MAINNET';
-$helpMe 		= array_key_exists('help', $params);
-$sslActived 	= $params['ssl'] ?? false;
+$rpcBindIp = $params['rpc-bind-ip'] ?? '0.0.0.0' ;
+$rpcBindPort = $params['rpc-bind-port'] ?? 8086;
+$p2pBindIp = $params['p2p-bind-ip'] ?? '0.0.0.0';
+$p2pBindPort = $params['p2p-bind-port'] ?? 3030;
+$dataFolder = $params['data-folder'] ?? './';
+$prefix = $params['prefix'] ?? BlockchainConfig::NAME;
+$network = $params['network'] ?? 'MAINNET';
+$helpMe = array_key_exists('help', $params);
+$sslActived = array_key_exists('ssl', $params);
+$resetMode = array_key_exists('reset', $params);
+
+$shownGenesisHash = array_key_exists('genesis', $params);
 
 if ($helpMe) {
 	die($help['node']);
@@ -54,14 +60,16 @@ if ($helpMe) {
 
 $peersConfig = [
 	[
-		'host' => '188.165.211.215',
+		'host' => '0.0.0.0',
 		'port' => 3031
 	],
 ];
 
 $localPeerConfig = [
 	'host' => $p2pBindIp,
-	'port' => $p2pBindPort
+	'port' => $p2pBindPort,
+	'rpcHost' => $rpcBindIp,
+	'rpcPort' => $rpcBindPort
 ];
 
 $loop = Factory::create();
@@ -78,7 +86,7 @@ $connector = new Connector($loop, [
 
 $p2pServer =  new Node\P2pServer($connector, $network);
 
-$inesCoin = new Blockchain($dataFolder, $prefix);
+$inesCoin = new Blockchain($dataFolder, $prefix, $resetMode, $resetMode, $shownGenesisHash);
 
 $node = new Node(
     new Miner($inesCoin, new ZeroPrefix()),

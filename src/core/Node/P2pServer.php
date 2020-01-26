@@ -91,33 +91,33 @@ class P2pServer
                         $this->handlePeerListResponse($packet, $connection);
                         break;
 
-                    case Packet::REQUEST_PEER_BLOCK_SYNC:
-                        $this->handlePeerBlockSync($packet, $connection);
-                        break;
+                    // case Packet::REQUEST_PEER_BLOCK_SYNC:
+                    //     $this->handlePeerBlockSync($packet, $connection);
+                    //     break;
 
-                    case Packet::REQUEST_PEER_BLOCK_SYNC_RESPONSE:
-                        $this->handlePeerBlockSyncResponse($packet, $connection);
-                        break;
+                    // case Packet::REQUEST_PEER_BLOCK_SYNC_RESPONSE:
+                    //     $this->handlePeerBlockSyncResponse($packet, $connection);
+                    //     break;
 
-                    case Packet::BROADCAST_FOR_PERSISTENCE:
-                        $this->handleBroadcastForPersistence($packet, $connection);
-                        break;
+                    // case Packet::BROADCAST_FOR_PERSISTENCE:
+                    //     $this->handleBroadcastForPersistence($packet, $connection);
+                    //     break;
 
-                    case Packet::BROADCAST_TOP_BLOCK:
-                        $this->handleBroadcastTopBlock($packet, $connection);
-                        break;
+                    // case Packet::BROADCAST_TOP_BLOCK:
+                    //     $this->handleBroadcastTopBlock($packet, $connection);
+                    //     break;
 
-                    case Packet::BROADCAST_TOP_BLOCK_RESPONSE:
-                        $this->handleBroadcastTopBlockResponse($packet, $connection);
-                        break;
+                    // case Packet::BROADCAST_TOP_BLOCK_RESPONSE:
+                    //     $this->handleBroadcastTopBlockResponse($packet, $connection);
+                    //     break;
 
-                    case Packet::BROADCAST_MEMORY_TRANSACTION_POOL:
-                        $this->handleBroadcastMemoryPoolTransactionResponse($packet, $connection);
-                        break;
+                    // case Packet::BROADCAST_MEMORY_TRANSACTION_POOL:
+                    //     $this->handleBroadcastMemoryPoolTransactionResponse($packet, $connection);
+                    //     break;
 
-                    case Packet::BROADCAST_MEMORY_MESSAGE_POOL:
-                        $this->handleBroadcastMemoryPoolMessageResponse($packet, $connection);
-                        break;
+                    // case Packet::BROADCAST_MEMORY_MESSAGE_POOL:
+                    //     $this->handleBroadcastMemoryPoolMessageResponse($packet, $connection);
+                    //     break;
 
                     default:
                         break;
@@ -133,6 +133,7 @@ class P2pServer
 
 
         $connection->on('close', function () use ($connection): void {
+            var_dump('Connection closed: ' . $connection->getRemoteAddress());
             if (isset($this->peers[$connection->getRemoteAddress()])) {
                 unset($this->peers[$connection->getRemoteAddress()]);
             }
@@ -165,7 +166,7 @@ class P2pServer
         }
 
         foreach ($peersConfig as $peer) {
-            if ($localPeerConfig['host'] !== $peer['host'] || $localPeerConfig['port'] !== $peer['port']) {
+            if ($localPeerConfig['host'] !== $peer['host'] ||$localPeerConfig['port'] !== $peer['port']) {
                 $this->node->connect($peer['host'], (int) $peer['port']);
             }
         }
@@ -188,18 +189,22 @@ class P2pServer
     {
         $remoteAddress = $host.':'. $port;
         if (isset($this->peers[$remoteAddress])) {
+            var_dump($remoteAddress . ' already in peers');
             return;
         }
 
         if (count($this->peers) >= $this->limitConnectedPeers) {
+            var_dump($remoteAddress . ' limitConnectedPeers execeded');
             return;
         }
 
         $CI = $this;
         $cf = function (ConnectionInterface $connection) use ($host, $port, $CI)   {
             $remoteAddress = $connection->getRemoteAddress();
+            var_dump($remoteAddress . ' ConnectionInterface...');
 
             if (isset($CI->peers[$remoteAddress])) {
+                var_dump($remoteAddress . ' ConnectionInterface -> close');
                 $connection->close();
                 return;
             }
@@ -384,9 +389,11 @@ class P2pServer
                     $this->node->getBlockchain()->es->peerService()->index($index, $peer);
                 }
 
-                $this->write($connection, Packet::REQUEST_PEERS_RESPONSE, [
+                $data = [
                     'peers' => $this->node->getBlockchain()->es->peerService()->getRemoteAddresses()
-                ]);
+                ];
+
+                $this->write($connection, Packet::REQUEST_PEERS_RESPONSE, $data);
             }
 
             $this->peersInputStream[$remoteAddress] = [];
@@ -437,77 +444,85 @@ class P2pServer
 
     public function handlePeerListResponse($packet, ConnectionInterface $connection)
     {
-        $remoteAddress = $connection->getRemoteAddress();
+        var_dump('P2pServer::handlePeerListResponse');
+        // $remoteAddress = $connection->getRemoteAddress();
+        $connection->close();
+        // if (!isset($this->peers[$remoteAddress])) {
+        //     var_dump('P2pServer::handlePeerListResponse -> error -> peers [' . $remoteAddress . '] not isset');
+        //     return;
+        // }
 
-        if (!isset($this->peers[$remoteAddress])) {
-            return;
-        }
+        // if (isset($this->peersOutputStream[$remoteAddress]) && !empty($this->peersOutputStream[$remoteAddress])) {
+        //     var_dump('P2pServer::handlePeerListResponse -> error -> peersOutputStream [' . $remoteAddress . '] not isset');
+        //     $this->write($connection, Packet::REQUEST_PEERS_RESPONSE, []);
+        //     return;
+        // }
 
-        if (isset($this->peersOutputStream[$remoteAddress]) && !empty($this->peersOutputStream[$remoteAddress])) {
-            $this->write($connection, Packet::REQUEST_PEERS_RESPONSE, []);
-            return;
-        }
+        // if ($packet->onlyOne()) {
+        //     var_dump('P2pServer::handlePeerListResponse -> onlyOne');
+        //     $body = $packet->getBody();
+        //     $decrypted = $this->decrypt($body, $packet->getPublicKey());
 
-        if ($packet->onlyOne()) {
-            $body = $packet->getBody();
-            $decrypted = $this->decrypt($body, $packet->getPublicKey());
+        //     if ($decrypted) {
+        //         foreach ($decrypted['peers'] as $index => $peer) {
+        //             $this->node->getBlockchain()->es->peerService()->index($index, $peer);
+        //         }
 
-            if ($decrypted) {
-                foreach ($decrypted['peers'] as $index => $peer) {
-                    $this->node->getBlockchain()->es->peerService()->index($index, $peer);
-                }
+        //         $connection->close();
+        //         $this->_startBlockchainSynchro();
+        //     }
 
-                $connection->close();
-                $this->_startBlockchainSynchro();
-            }
+        //     $this->peersInputStream[$remoteAddress] = [];
 
-            $this->peersInputStream[$remoteAddress] = [];
+        // } else if($packet->isFirst()) {
+        //     var_dump('P2pServer::handlePeerListResponse -> isFirst');
+        //     $this->peersInputStream[$remoteAddress] = [];
+        //     $this->peersInputStream[$remoteAddress][] = $packet;
 
-        } else if($packet->isFirst()) {
-            $this->peersInputStream[$remoteAddress] = [];
-            $this->peersInputStream[$remoteAddress][] = $packet;
+        //     $connection->write(Packet::prepare(
+        //         $this->network,
+        //         Packet::REQUEST_PEERS_RESPONSE,
+        //         [],
+        //         $this->getPublicKey()
+        //     ));
+        // } else if($packet->isLast()) {
+        //     var_dump('P2pServer::handlePeerListResponse -> isLast');
 
-            $connection->write(Packet::prepare(
-                $this->network,
-                Packet::REQUEST_PEERS_RESPONSE,
-                [],
-                $this->getPublicKey()
-            ));
-        } else if($packet->isLast()) {
+        //     $buffer = '';
+        //     foreach ($this->peersInputStream[$remoteAddress] as $packetCache) {
+        //         $buffer .= $packetCache->getBody();
+        //     }
 
-            $buffer = '';
-            foreach ($this->peersInputStream[$remoteAddress] as $packetCache) {
-                $buffer .= $packetCache->getBody();
-            }
+        //     $buffer .= $packet->getBody();
 
-            $buffer .= $packet->getBody();
+        //     $decrypted = $this->decrypt($buffer, $packet->getPublicKey());
 
-            $decrypted = $this->decrypt($buffer, $packet->getPublicKey());
+        //     if ($decrypted) {
+        //         foreach ($decrypted['peers'] as $index => $peer) {
+        //             $this->node->getBlockchain()->es->peerService()->index($index, $peer);
+        //         }
 
-            if ($decrypted) {
-                foreach ($decrypted['peers'] as $index => $peer) {
-                    $this->node->getBlockchain()->es->peerService()->index($index, $peer);
-                }
+        //         $connection->close();
 
-                $connection->close();
+        //         $this->_startBlockchainSynchro();
+        //     }
 
-                $this->_startBlockchainSynchro();
-            }
-
-            $this->peersInputStream[$remoteAddress] = [];
-        } else {
-            $this->peersInputStream[$remoteAddress][] = $packet;
-            $connection->write(Packet::prepare(
-                $this->network,
-                Packet::REQUEST_PEERS_RESPONSE,
-                [],
-                $this->getPublicKey()
-            ));
-        }
+        //     $this->peersInputStream[$remoteAddress] = [];
+        // } else {
+        //     var_dump('P2pServer::handlePeerListResponse -> xxx');
+        //     $this->peersInputStream[$remoteAddress][] = $packet;
+        //     $connection->write(Packet::prepare(
+        //         $this->network,
+        //         Packet::REQUEST_PEERS_RESPONSE,
+        //         [],
+        //         $this->getPublicKey()
+        //     ));
+        // }
     }
 
     public function handlePeerBlockSync($packet, ConnectionInterface $connection)
     {
+        var_dump('P2pServer::handlePeerBlockSync');
         $remoteAddress = $connection->getRemoteAddress();
 
         if (isset($this->peersOutputStream[$remoteAddress]) && !empty($this->peersOutputStream[$remoteAddress])) {
@@ -700,25 +715,27 @@ class P2pServer
             }
         }
 
-        $blockHeight = (int) $peerInfo['height'] + 1;
+        $connection->close();
 
-        $topHeight = $this->node->getBlockchain()->getTopHeight();
+        // $blockHeight = (int) $peerInfo['height'] + 1;
 
-        if ($blockHeight === $topHeight) {
-        //    var_dump('Node sync complete, waitting for next block: height -> ' . $blockHeight . ' | top -> '.$topHeight);
-            // $connection->close();
-            // return;
-        }
+        // $topHeight = $this->node->getBlockchain()->getTopHeight();
 
-        if ($blockHeight > $topHeight) {
-            $connection->write(Packet::prepare(
-                $this->network,
-                Packet::REQUEST_PEER_BLOCK_SYNC,
-                $this->getHelloMoonMessage(),
-                $this->getPublicKey()
-            ));
-            return;
-        }
+        // if ($blockHeight === $topHeight) {
+        // //    var_dump('Node sync complete, waitting for next block: height -> ' . $blockHeight . ' | top -> '.$topHeight);
+        //     // $connection->close();
+        //     // return;
+        // }
+
+        // if ($blockHeight > $topHeight) {
+        //     $connection->write(Packet::prepare(
+        //         $this->network,
+        //         Packet::REQUEST_PEER_BLOCK_SYNC,
+        //         $this->getHelloMoonMessage(),
+        //         $this->getPublicKey()
+        //     ));
+        //     return;
+        // }
     }
 
     public function handleBroadcastTopBlock($packet, ConnectionInterface $connection)

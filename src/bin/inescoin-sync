@@ -1,0 +1,118 @@
+#!/usr/bin/env php
+<?php
+
+// Copyright 2019 The Inescoin developers.
+// - Mounir R'Quiba
+// Licensed under the GNU Affero General Public License, version 3.
+
+require __DIR__.'/../../vendor/autoload.php';
+require __DIR__ . '/../core/help.php';
+
+use Inescoin\ES\ESBlockchainProvider;
+use Inescoin\BlockchainConfig;
+use Inescoin\Blockchain;
+use Inescoin\Block;
+use Inescoin\RPC\RpcClient;
+
+$params = getopt('', [
+	'data-folder::',
+	'prefix::',
+	'help::',
+]);
+
+$prefix = $params['prefix'] ?? BlockchainConfig::NAME;
+$helpMe = array_key_exists('help', $params);
+$dataFolder = $params['data-folder'] ?? './';
+
+if ($helpMe) {
+	die($help['sync']);
+}
+
+$peersConfig = [
+	'rpcHost' => '0.0.0.0',
+	'rpcPort' => 8087
+];
+
+$esService = ESBlockchainProvider::getInstance($prefix);
+
+$iteration = 0;
+$transferLimit = 100;
+
+$inesCoin = new Blockchain($dataFolder, $prefix, true, true);
+$rpcClient = new RpcClient();
+
+while (true) {
+	$peers = $esService->peerService()->getByTopCumulativeDifficulty();
+	$alreadyChecked = [];
+
+	if (empty($peers)) {
+		$peers[] = $peersConfig;
+	}
+
+	foreach ($peers as $host => $value) {
+		$remote =  $value['rpcHost'] . ':' . $value['rpcPort'];
+		if (!in_array($remote, $alreadyChecked)) {
+			$currentBlockHeight = $inesCoin->getTopHeight();
+
+			$status = $rpcClient->request($remote, 'GET', 'status');
+			$remotePeers = $rpcClient->request($remote, 'GET', 'peers');
+
+			foreach ($remotePeers as $index => $peer) {
+                $esService->peerService()->index($index, $peer);
+			}
+
+			if (!isset($status['height'])) {
+				continue;
+			}
+
+			if (is_array($status) && isset($status['height']) && $currentBlockHeight < $status['height']) {
+
+				$page = ceil($status['height'] / $transferLimit);
+				var_dump($remote . ' | height => ' . $status['height'], $page);
+
+				$currentPos = !$currentBlockHeight ?  1 : $page - ceil($currentBlockHeight / $transferLimit);
+
+				while ($status['height'] > $currentBlockHeight) {
+					$blocks = $rpcClient->request($remote, 'POST', 'get-blocks-by-height', [
+						'height' => $currentBlockHeight + 1,
+						'limit' => $transferLimit,
+						'original' => 1
+					]);
+
+					if (isset($blocks['error'])) {
+						var_dump($blocks['error']);
+						break;
+					}
+
+					$_blocks = [];
+					foreach ($blocks as $block) {
+						$_blocks[] = Block::toBlock((array) $block);
+					}
+
+					if (!empty($_blocks)) {
+						if ($inesCoin->bulkAdd($_blocks)) {
+							$currentBlockHeight = $inesCoin->getTopHeight();
+							$currentPos++;
+						} else {
+							var_dump('| x ERROR x | > bulkAdd <');
+						}
+					}
+
+					$currentBlockHeight = $inesCoin->getTopHeight();
+					sleep(3);
+				}
+			} else {
+				if ($currentBlockHeight >= $status['height']) {
+					var_dump($remote . ' |  Synchro OK | ' . $status['height']);
+				} else {
+					var_dump($remote . ' | x ERROR x | ');
+				}
+			}
+
+			$alreadyChecked[] = $remote;
+		}
+	}
+
+	var_dump('Waiting for next block [' . $iteration++ . '] => Top Block => ' . $inesCoin->getTopHeight());
+	sleep(10);
+}

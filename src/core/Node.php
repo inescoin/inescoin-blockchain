@@ -26,9 +26,9 @@ final class Node
         $this->p2pServer = $p2pServer;
     }
 
-    public function getLastBlocks($limit = 10, $page = 1)
+    public function getLastBlocks($limit = 10, $page = 1, $original = false)
     {
-        return $this->miner->getBlockchain()->getLastBlock($limit, true, $page);
+        return $this->miner->getBlockchain()->getLastBlock($limit, true, $page, $original);
     }
 
     public function getMessages($id = null): array

@@ -58,7 +58,7 @@ class Blockchain {
 
     private $lastTransactionPool = null;
 
-    public function __construct($blockDirectory = './', $prefix = '') {
+    public function __construct($blockDirectory = './', $prefix = '', $hardScan = false, $resetMode = false, $showGenensisAndExit = false) {
         $this->configHash = BlockchainConfig::getHash();
 
         $this->prefix = $prefix;
@@ -68,10 +68,7 @@ class Blockchain {
 
         $this->es = ESBlockchainProvider::getInstance($prefix);
 
-        // Check if blockchain exists
-
-        if(!$this->resetBank()) {
-        // if(!$this->scanFromZero(true, true)) {
+        if(!$this->resetBank($hardScan, $resetMode, $showGenensisAndExit)) {
             $this->logger->error("Init: Invalid blockchain, you need to resync from 0, please delete your blockchain folder: " . $blockDirectory);
             die();
         }
@@ -159,12 +156,12 @@ class Blockchain {
         return $this->es->blockService()->getChain($fromHeigth, $toHeigth);
     }
 
-    public function getLastBlock($limit = 1, $asArray = false, $page = 1) {
-        return $this->es->blockService()->getLastBlock($limit, $asArray, $page);
+    public function getLastBlock($limit = 1, $asArray = false, $page = 1, $original = false) {
+        return $this->es->blockService()->getLastBlock($limit, $asArray, $page, $original);
     }
 
-    public function getLastBlocks($limit = 1, $asArray = false, $page = 1) {
-        return $this->es->blockService()->getLastBlocks($limit, $asArray, $page);
+    public function getLastBlocks($limit = 1, $asArray = false, $page = 1, $original = false) {
+        return $this->es->blockService()->getLastBlocks($limit, $asArray, $page, $original);
     }
 
     public function getLastDomains() {
@@ -182,9 +179,9 @@ class Blockchain {
         ];
     }
 
-    private function createGenesisBlock()
+    private function createGenesisBlock($showGenensisAndExit = false)
     {
-        $block = Block::generateGenesisBlock($this->prefix);
+        $block = Block::generateGenesisBlock($this->prefix, $showGenensisAndExit);
         $this->saveBlockToDB($block);
         return $block;
     }
@@ -518,16 +515,17 @@ class Blockchain {
         $previousBlock = $this->getLastBlock();
 
         if (!isset($blocks[0])) {
+            var_dump('----- AA1');
             return false;
         }
 
         $firstBlock = $blocks[0];
 
         if (empty($firstBlock)) {
+            var_dump('----- AA2');
             return false;
         }
 
-        var_dump($firstBlock->getHeight());
 
         if ($previousBlock && $firstBlock->getHeight() < $previousBlock->getHeight()) {
             return true;
@@ -541,6 +539,7 @@ class Blockchain {
                 }
 
                 if (!$previousBlock->isNextValid($block)) {
+                    var_dump('----- AA3', $previousBlock->getHeight(), $block->getHeight());
                     return false;
                 }
             }
@@ -551,7 +550,7 @@ class Blockchain {
             }
 
             $previousBlock = $block;
-            var_dump('[Blockchain] [buldAdd] Height => ' . $block->getHeight());
+            // var_dump('[Blockchain] [buldAdd] Height => ' . $block->getHeight());
             $this->logger->info('[Blockchain] [buldAdd] Height => ' . $block->getHeight());
         }
 
@@ -611,19 +610,26 @@ class Blockchain {
         return true;
     }
 
-    public function resetBank()
+    public function resetBank($hardScan = true, $resetMode = true, $showGenensisAndExit = false)
     {
-        $this->es->bankService()->reset()->initIndex();
-        $this->es->transferService()->reset()->initIndex();
-        $this->es->transactionPoolService()->reset()->initIndex();
-        $this->es->transferService()->reset()->initIndex();
-        $this->es->transferPoolService()->reset()->initIndex();
-        $this->es->todoService()->reset()->initIndex();
-        $this->es->domainService()->reset()->initIndex();
 
-        $this->createGenesisBlock();
+        if ($resetMode) {
+            if (!$showGenensisAndExit) {
+                $this->es->bankService()->reset()->initIndex();
+                $this->es->transferService()->reset()->initIndex();
+                $this->es->transactionPoolService()->reset()->initIndex();
+                $this->es->transferService()->reset()->initIndex();
+                $this->es->transferPoolService()->reset()->initIndex();
+                $this->es->todoService()->reset()->initIndex();
+                $this->es->domainService()->reset()->initIndex();
+            }
 
-        return $this->scanFromZero(true, true);
+            $this->createGenesisBlock($showGenensisAndExit);
+        } else {
+            $showGenensisAndExit && $this->createGenesisBlock($showGenensisAndExit);
+        }
+
+        return !$showGenensisAndExit && $this->scanFromZero($hardScan, $resetMode);
     }
 
     public function scanFromZero($hardScan = false , $resetMode = false)
@@ -637,7 +643,6 @@ class Blockchain {
             return true;
         }
 
-        var_dump('[Blockchain] Start Scan... 1');
         $range = 100;
         $fromBlockHeight = 0;
         $topBlockHeight = $lastBlock->getHeight();
@@ -706,7 +711,8 @@ class Blockchain {
             return true;
         }
 
-        if (!is_array($transactions)) {
+        if (!is_array($transactions) || empty($transactions)) {
+            var_dump('[Blockchain][isValidTransactions] Empty transactions');
             return false;
         }
 
@@ -752,6 +758,11 @@ class Blockchain {
 
         $lastBlocks = $this->getLastBlock(BlockchainConfig::DIFFICULTY_TARGET);
         $lastBlock = $lastBlocks[0];
+
+        if (!$lastBlock) {
+            return 1;
+        }
+
         $count = count($lastBlocks);
         $adjutBlock = $lastBlocks[$count - 1];
         $difficulty = $lastBlock->getDifficulty();

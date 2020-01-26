@@ -16,7 +16,7 @@ class Cache {
 
 	public $cacheClearTimer = 900;
 
-	public $cacheTimeout = 60;
+	public $cacheTimeout = 10;
 
 	public function __construct($prefix = 'bob')
 	{

@@ -139,6 +139,12 @@ class ESPeerService extends ESService
 			        'port' => [
 			          'type' => 'long',
 			        ],
+			        'rpcHost' => [
+			          'type' => 'text',
+			        ],
+			        'rpcPort' => [
+			          'type' => 'long',
+			        ],
 			        'lastSeen' => [
 			          'type' => 'long',
 			        ],
@@ -172,6 +178,8 @@ class ESPeerService extends ESService
 
 		$host = $config['host'];
 		$port = $config['port'];
+		$rpcHost = $config['rpcHost'];
+		$rpcPort = $config['rpcPort'];
 
 		$remoteAddress = $host . ':' . $port;
 
@@ -185,6 +193,8 @@ class ESPeerService extends ESService
 			'topCumulativeDifficulty' => $topCumulativeDifficulty,
 			'host' => $host,
 			'port' => $port,
+			'rpcHost' => $rpcHost,
+			'rpcPort' => $rpcPort,
 			'lastSeen' => (new \DateTimeImmutable())->getTimestamp() * 1000
 		];
 
