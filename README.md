@@ -27,7 +27,7 @@
 
   3 - Monitoring
   ```
-    journalctrl -u inescoin-node.service -f
+    journalctl -u inescoin-node.service -f
   ```
 
 # Inescoin Node API
