@@ -10,17 +10,17 @@ use GuzzleHttp\Client;
 
 class RpcClient {
 
-	protected $client;
+	protected $client = [];
 
-	private $host = '';
+	private $hosts = [];
 
 	public function __construct()
 	{
 	}
 
-	public function request($host, $method = 'POST', $uri = '', $params = [])
+	public function request($baseUri, $method = 'POST', $uri = '', $params = [], $port = '8087', $ssl = false)
     {
-    	$this->_initClient('http://' . $host  .'/');
+    	$host = $this->_initClient($baseUri, $port, $ssl);
 
     	$allowedMethods = ['POST', 'GET'];
 
@@ -30,7 +30,7 @@ class RpcClient {
 
     	$response = [];
     	try {
-			$response = $this->client->request($method, $uri, [ 'json' => $params]);
+			$response = $this->client[$host]->request($method, $uri, [ 'json' => $params]);
     	} catch(\Exception $e) {
     		$response['error'] = $e->getMessage();
     	}
@@ -42,18 +42,24 @@ class RpcClient {
     	return $response;
 	}
 
-	private function _initClient($host) {
-		if ($this->host === $host) {
-			return;
+	private function _initClient($baseUri, $port, $ssl = false) {
+		$port = !$ssl
+			? ':' . $port
+			: '';
+		$protocol = !$ssl
+			? 'http://'
+			: 'https://';
+		$host = $protocol . $baseUri . $port . '/';
+
+		if (!array_key_exists($host, $this->client)) {
+			$this->client[$host] = new \GuzzleHttp\Client([
+				'base_uri' => $host,
+				'request.options' => [
+				     'exceptions' => false,
+				]
+			]);
 		}
 
-		$this->client = new \GuzzleHttp\Client([
-			'base_uri' => $host,
-			'request.options' => [
-			     'exceptions' => false,
-			]
-		]);
-
-		$this->host = $host;
+		return $host;
 	}
 }

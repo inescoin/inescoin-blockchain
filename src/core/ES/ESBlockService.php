@@ -346,7 +346,6 @@ class ESBlockService extends ESService
 			}
 
 			if (!empty($toDoInTransaction)) {
-				var_dump($toDoInTransaction);
 				$this->todoService->bulkIndex($toDoInTransaction);
 				$toDoInTransaction = [];
 			}
