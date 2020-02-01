@@ -9,6 +9,7 @@ require __DIR__.'/../../vendor/autoload.php';
 require __DIR__ . '/../core/help.php';
 
 use Inescoin\BlockchainSync;
+use Inescoin\BlockchainConfig;
 
 $params = getopt('', [
 	'prefix::',

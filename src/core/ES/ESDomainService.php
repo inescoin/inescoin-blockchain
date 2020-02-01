@@ -114,6 +114,43 @@ class ESDomainService extends ESService
 		return $output;
 	}
 
+	public function getByHeight($height) {
+		$this->logger->info("[ESBlockService][getChain] height: $height");
+		try {
+			$result = $this->client->search([
+			    'index' => $this->index,
+			    'type' => $this->type,
+			    'size' => 100,
+			    'body' => [
+			    	'query' => [
+			    		"range" => [
+				            "blockHeightEnd" => [
+				                "lte" => $height,
+				                "boost" => 2.0
+				            ]
+				        ]
+			        ],
+			        "sort" => [
+				    	"blockHeightEnd" => "asc"
+				  	],
+			    ]
+			]);
+		} catch(\Exception $e) {
+			var_dump($e->getMessage());
+		}
+
+		if (!isset($result)) {
+			return [];
+		}
+
+		$output = [];
+		foreach ($result['hits']['hits'] as $hit) {
+			$output[] = $hit['_source'];
+		}
+
+		return $output;
+	}
+
 	public function getMapping() {
 		return [
 		    'domain' => [

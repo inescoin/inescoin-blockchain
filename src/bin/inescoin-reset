@@ -25,5 +25,4 @@ if ($helpMe) {
 	die($help['reset']);
 }
 
-$esService = ESBlockchainProvider::getInstance($prefix);
-$esService->resetAll($height);
+(ESBlockchainProvider::getInstance($prefix))->resetAll($height);

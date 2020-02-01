@@ -1,6 +1,6 @@
 <?php
 
-// Copyright 2019 The Inescoin developers.
+// Copyright 2019 - 2020 The Inescoin developers.
 // - Mounir R'Quiba
 // Licensed under the GNU Affero General Public License, version 3.
 
@@ -12,7 +12,8 @@ use Inescoin\Blockchain;
 use Inescoin\Block;
 use Inescoin\RPC\RpcClient;
 
-class BlockchainSync {
+class BlockchainSync
+{
 
 	protected $iteration = 0;
 
@@ -29,6 +30,7 @@ class BlockchainSync {
 	];
 
 	protected $alreadyChecked = [];
+	protected $blacklist = [];
 
 	public function __construct($prefix = 'inescoin') {
 		$this->rpcClient = new RpcClient();
@@ -37,7 +39,7 @@ class BlockchainSync {
 
 	public function run() {
 		while (true) {
-			$alreadyChecked = [];
+			$this->alreadyChecked = [];
 
 			$peers = $this->blockchain->es->peerService()->getByTopCumulativeDifficulty();
 			array_unshift($peers, $this->peersConfig);
@@ -45,7 +47,8 @@ class BlockchainSync {
 			foreach ($peers as $peer) {
 				$ssl = isset($peer['ssl']);
 				$remote = (!$ssl ? 'http://' : 'https://') . $peer['rpcHost'] . (!$ssl ? ':' . $peer['rpcPort'] : '');
-				if (!in_array($remote, $alreadyChecked)) {
+
+				if (!(in_array($remote, $this->alreadyChecked) || in_array($remote, $this->blacklist))) {
 					$currentBlockHeight = $this->blockchain->getTopHeight();
 
 					var_dump('|-----> Connect to ' . $remote . '...');
@@ -69,7 +72,7 @@ class BlockchainSync {
 
 						$currentPos = !$currentBlockHeight ?  1 : $page - ceil($currentBlockHeight / $this->transferLimit);
 
-						while ($status['height'] > $currentBlockHeight) {
+						while ($status['height'] > $currentBlockHeight && !in_array($remote, $this->blacklist)) {
 							$blocks = $this->rpcClient->request($peer['rpcHost'], 'POST', 'get-blocks-by-height', [
 								'height' => $currentBlockHeight + 1,
 								'limit' => $this->transferLimit,
@@ -93,6 +96,7 @@ class BlockchainSync {
 									$currentPos++;
 								} else {
 									var_dump('| x ERROR x | > bulkAdd <');
+									$this->blacklist[] = $remote;
 								}
 							}
 
@@ -109,7 +113,7 @@ class BlockchainSync {
 						}
 					}
 
-					$alreadyChecked[] = $remote;
+					$this->alreadyChecked[] = $remote;
 				}
 			}
 

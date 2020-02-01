@@ -104,6 +104,7 @@ class MinerPool
 		    	}
     		} catch (ConnectException $e) {
 	    	    var_dump($e->getMessage());
+    			sleep(30);
     		}
 
     		// sleep(10);

@@ -69,13 +69,6 @@ class Block
 
         $this->hash = $hash;
 
-        $countData = 0;
-        if (is_array($data)) {
-            $countData = count($data);
-        }
-
-        $this->tempData = $data;
-
         $this->countTransaction = $totalTransaction;
 
         $this->countTotalTransaction = $totalTransaction;
@@ -195,9 +188,9 @@ class Block
         return $this;
     }
 
-    public function setDataJson()
+    public function setDataJson($data)
     {
-        $this->data =  json_decode(base64_decode($this->data));
+        $this->data =  json_decode(base64_decode($data));
         return $this;
     }
 
@@ -210,16 +203,25 @@ class Block
     public function getDataJson()
     {
         $transactions = [];
-        $data = json_decode(base64_decode($this->data, true));
+
+        $data = is_array($this->data)
+            ? $this->data
+            : json_decode(base64_decode($this->data, true));
+
         if (is_array($data)) {
             foreach ($data as $transaction) {
                 $transaction = (array) $transaction;
-                $transaction['transfers'] = json_decode(base64_decode($transaction['transfers']), true);
+                $transaction['transfers'] = is_array($transaction['transfers'])
+                    ? (array) $transaction['transfers']
+                    : json_decode(base64_decode($transaction['transfers']), true);
+
+                foreach ($transaction['transfers'] as $pos => $transfer) {
+                    $transaction['transfers'][$pos] = (array) $transfer;
+                }
 
                 $transactions[] = $transaction;
             }
         }
-
 
         return $transactions;
     }
@@ -227,18 +229,6 @@ class Block
     public function getData()
     {
         return $this->data;
-    }
-
-    public function getTempData()
-    {
-        $data = [];
-        if (is_array($this->tempData)) {
-            foreach ($this->tempData as $block) {
-                $data[] = $block;
-            }
-        }
-
-        return $data;
     }
 
     public function getHash()
@@ -324,7 +314,10 @@ class Block
             BlockchainConfig::GENESIS_DATE
         );
 
-        $transactions = [$genesisTransaction->getInfos()];
+        $transactions = [
+            $genesisTransaction->getInfos()
+        ];
+
         $merkelRoot = MerkleTree::getRoot($transactions);
 
         $genesisBlock = new self(
@@ -452,8 +445,6 @@ class Block
             'countTransaction' => $this->countTransaction,
         ];
 
-
-
         return $data;
     }
 
@@ -477,6 +468,36 @@ class Block
             'countTotalTransaction' => $this->countTotalTransaction,
             'countTransaction' => $this->countTransaction,
         ];
+    }
+
+    public static function cleanBlock(array $blockArray, string $transactionHash)
+    {
+        if (!isset($transactionHash)) {
+            var_dump('[Block] [cleanBlock] $transactionHash not found');
+            return;
+        }
+
+        $block = self::toBlock($blockArray);
+        $transactions = $block->getDataJson();
+
+
+        $transactionHash = $transactionHash;
+
+        foreach ($transactions as $k => $transaction) {
+            if ($transaction['hash'] === $transactionHash) {
+                $transactions[$k]['toDo'] = 'W10=';
+            }
+
+            $transactions[$k]['transfers'] = base64_encode(json_encode($transactions[$k]['transfers']));
+        }
+
+        $transactions = base64_encode(json_encode($transactions));
+
+        $block->set([
+            'data' => $transactions
+        ]);
+
+        return $block->getInfos();
     }
 
     public static function toBlock(array $block)
