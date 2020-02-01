@@ -91,13 +91,13 @@ class BlockchainConsumer
 						case 'create':
 							switch ($todo['_source']['amount']) {
 								case BlockchainConfig::WEB_COST_ONE_MONTH:
-									$exec['blockHeightEnd'] = $exec['blockHeight'] + 2;
+									$exec['blockHeightEnd'] = $exec['blockHeight'] + BlockchainConfig::WEB_COST_UNIT_BLOCKS;
 									break;
 								case BlockchainConfig::WEB_COST_THREE_MONTH:
-									$exec['blockHeightEnd'] = $exec['blockHeight'] + (2 * 3);
+									$exec['blockHeightEnd'] = $exec['blockHeight'] + (BlockchainConfig::WEB_COST_UNIT_BLOCKS * 3);
 									break;
 								case BlockchainConfig::WEB_COST_SIX_MONTH:
-									$exec['blockHeightEnd'] = $exec['blockHeight'] + (2 * 6);
+									$exec['blockHeightEnd'] = $exec['blockHeight'] + (BlockchainConfig::WEB_COST_UNIT_BLOCKS * 6);
 									break;
 
 								default:
@@ -124,13 +124,13 @@ class BlockchainConsumer
 						case 'renew':
 							switch ($todo['_source']['amount']) {
 								case BlockchainConfig::WEB_COST_ONE_MONTH:
-									$exec['blockHeightEnd'] = $exec['blockHeight'] + 2;
+									$exec['blockHeightEnd'] = $exec['blockHeight'] + BlockchainConfig::WEB_COST_UNIT_BLOCKS;
 									break;
 								case BlockchainConfig::WEB_COST_THREE_MONTH:
-									$exec['blockHeightEnd'] = $exec['blockHeight'] + (2 * 3);
+									$exec['blockHeightEnd'] = $exec['blockHeight'] + (BlockchainConfig::WEB_COST_UNIT_BLOCKS * 3);
 									break;
 								case BlockchainConfig::WEB_COST_SIX_MONTH:
-									$exec['blockHeightEnd'] = $exec['blockHeight'] + (2 * 6);
+									$exec['blockHeightEnd'] = $exec['blockHeight'] + (BlockchainConfig::WEB_COST_UNIT_BLOCKS * 6);
 									break;
 
 								default:
@@ -166,13 +166,13 @@ class BlockchainConsumer
 
 							switch ($todo['_source']['amount']) {
 								case BlockchainConfig::WEB_COST_ONE_MONTH:
-									$exec['blockHeightEnd'] = $websiteSource['blockHeightEnd'] + 2;
+									$exec['blockHeightEnd'] = $websiteSource['blockHeightEnd']  + BlockchainConfig::WEB_COST_UNIT_BLOCKS;
 									break;
 								case BlockchainConfig::WEB_COST_THREE_MONTH:
-									$exec['blockHeightEnd'] = $websiteSource['blockHeightEnd'] + (2 * 3);
+									$exec['blockHeightEnd'] = $websiteSource['blockHeightEnd'] + (BlockchainConfig::WEB_COST_UNIT_BLOCKS * 3);
 									break;
 								case BlockchainConfig::WEB_COST_SIX_MONTH:
-									$exec['blockHeightEnd'] = $websiteSource['blockHeightEnd'] + (2 * 6);
+									$exec['blockHeightEnd'] = $websiteSource['blockHeightEnd'] + (BlockchainConfig::WEB_COST_UNIT_BLOCKS * 6);
 									break;
 
 								default:
