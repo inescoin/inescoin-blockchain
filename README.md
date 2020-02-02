@@ -51,6 +51,8 @@
     journalctl -u inescoin-web-consumer.service -f
   ```
 
+**[Back to top](#Get-started)**
+
 # Inescoin Node API
 
 HTTP request to an entry point:
@@ -105,7 +107,7 @@ where:
 | 18. | [`/get-website-info`](#get-website-info)                        | POST      | Get website data by url                         |
 | 19. | [`/get-wallet-addresses-domain`](#get-wallet-addresses-domain)  | POST      | Get domain details by wallet addresses                        |
 
-**[Back to top](##Get-started)**
+**[Back to top](#Get-started)**
 
 ## Status
 | #   | URI                   | Method    | Description                                                   |
@@ -139,6 +141,8 @@ Response
 }
 ```
 
+**[Back to top](#Get-started)**
+
 ## Top block
 
 | #   | URI                   | Method    | Description                                                   |
@@ -169,6 +173,8 @@ Response
   "countTransaction": 0
 }
 ```
+
+**[Back to top](#Get-started)**
 
 ## Top height
 
@@ -210,6 +216,8 @@ Response
 }
 ```
 
+**[Back to top](#Get-started)**
+
 ## Memory transactions pool
 
 | #   | URI                   | Method    | Description                                                   |
@@ -246,6 +254,8 @@ Response
 }
 ```
 
+**[Back to top](#Get-started)**
+
 ## Peers
 
 | #   | URI                   | Method    | Description                                                   |
@@ -266,6 +276,8 @@ Response
   "<ip>:<port>"
 ]
 ```
+
+**[Back to top](#Get-started)**
 
 ## Get blocks
 
@@ -366,6 +378,8 @@ Response
 ]
 ```
 
+**[Back to top](#Get-started)**
+
 ## Get block by height
 
 | #   | URI                       | Method    | Description                                                   |
@@ -446,6 +460,8 @@ Response
     "countTransaction": 0
 }
 ```
+
+**[Back to top](#Get-started)**
 
 ## Get block by hash
 
@@ -528,6 +544,8 @@ Response
 }
 ```
 
+**[Back to top](#Get-started)**
+
 ## Get transaction by hash
 
 | #   | URI                             | Method    | Description                                                |
@@ -577,6 +595,8 @@ Response
     "status": "pending"
 }
 ```
+
+**[Back to top](#Get-started)**
 
 ## Get transfer by hash
 
@@ -640,6 +660,8 @@ Response
     }
 }
 ```
+
+**[Back to top](#Get-started)**
 
 ## Get wallet address infos
 
@@ -720,6 +742,8 @@ Response
 }
 ```
 
+**[Back to top](#Get-started)**
+
 ## Get wallet addresses infos
 
 | #   | URI                             | Method    | Description                                                |
@@ -758,6 +782,8 @@ Response
     }
 }
 ```
+
+**[Back to top](#Get-started)**
 
 ## Transaction
 
@@ -805,6 +831,8 @@ Success Response
 ]
 ```
 
+**[Back to top](#Get-started)**
+
 ## Get block template
 
 | #   | URI                             | Method    | Description                                                |
@@ -838,6 +866,8 @@ Response
     "merkleRoot": "0838e69388adc42ba6ec495dbbbe096bce833750d420931d903cb2a8fd010ccd"
 }
 ```
+
+**[Back to top](#Get-started)**
 
 ## Submit block hash
 
@@ -874,6 +904,8 @@ Success response
     'done' => 'ok'
 ]
 ```
+
+**[Back to top](#Get-started)**
 
 ## Get domain url
 
@@ -912,6 +944,8 @@ Success response
    "transactionHash": "4dc0e65abfa9e7e6f0a512ed005e50799caecd73e97576e54a726990460cae56"
 }
 ```
+
+**[Back to top](#Get-started)**
 
 ## Get website info
 
@@ -993,6 +1027,8 @@ Success response
 }
 ```
 
+**[Back to top](#Get-started)**
+
 ## Get wallet addresses domain
 
 | #   | URI                             | Method    | Description                                                |
@@ -1036,7 +1072,7 @@ Success response
 }
 ```
 
-**[Back to top](##Get-started)**
+**[Back to top](#Get-started)**
 
 # Backup blockchain database
 
@@ -1059,7 +1095,7 @@ For any reason you can reset or cut your blockchain from height (0 for all)
   bin/inescoin-reset --prefix=abcd --height=777
 ```
 
-**[Back to top](##Get-started)**
+**[Back to top](#Get-started)**
 
 # Docker dev env
 
@@ -1158,7 +1194,7 @@ For any reason you can reset or cut your blockchain from height (0 for all)
   ```
 
 
-**[Back to top](##Get-started)**
+**[Back to top](#Get-started)**
 
 # License
 
@@ -1166,4 +1202,4 @@ GNU GPL v3
 
 Copyright (c) 2017-2020 Mounir R'Quiba 
 
-**[Back to top](##Get-started)**
+**[Back to top](#Get-started)**
