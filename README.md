@@ -1,5 +1,19 @@
 # Inescoin Blockchain
-## Encrypted messenger with unfalsifiable transactions
+## Create your domain name and website into blockchain, with encrypted messenger
+
+* [`Get started`](#Get-started)
+    * Installation
+    * Start a node
+* [`Inescoin Node API`](#Inescoin-Node-API)
+    * Node infos
+    * Explorer
+    * Send transaction
+    * Miner
+    * Website
+* [`Backup blockchain`](#Backup-blockchain)
+* [`Docker dev env`](#Docker-dev-env)
+
+# Get started
 
   1 - Install node with ansible (Ubuntu)
 
@@ -9,8 +23,12 @@
     # Update your /etc/ansible/hosts file  with remote IP
     cd inescoin-ansible && ansible-playbook inescoin.yml
      
-    # New systemctrl inescoin-node.service is now available
-    # /etc/systemd/system/inescoin-node.service
+    # New systemctrl (/etc/systemd/system/)
+        - inescoin-node.service
+        - inescoin-sync-node.service
+        - inescoin-messenger.service
+        - inescoin-web-consumer.service
+    
   ```
 
   2 - Start inescoin node
@@ -28,6 +46,9 @@
   3 - Monitoring
   ```
     journalctl -u inescoin-node.service -f
+    journalctl -u inescoin-sync-node.service -f
+    journalctl -u inescoin-messenger.service -f
+    journalctl -u inescoin-web-consumer.service -f
   ```
 
 # Inescoin Node API
@@ -83,6 +104,8 @@ where:
 | 17. | [`/get-domain-url`](#get-domain-url)                            | POST      | Get domain details by url                 |
 | 18. | [`/get-website-info`](#get-website-info)                        | POST      | Get website data by url                         |
 | 19. | [`/get-wallet-addresses-domain`](#get-wallet-addresses-domain)  | POST      | Get domain details by wallet addresses                        |
+
+**[Back to top](##Get-started)**
 
 ## Status
 | #   | URI                   | Method    | Description                                                   |
@@ -1013,6 +1036,8 @@ Success response
 }
 ```
 
+**[Back to top](##Get-started)**
+
 # Backup blockchain database
 
 ## Export
@@ -1034,7 +1059,9 @@ For any reason you can reset or cut your blockchain from height (0 for all)
   bin/inescoin-reset --prefix=abcd --height=777
 ```
 
-# Docker - Dev environment
+**[Back to top](##Get-started)**
+
+# Docker dev env
 
   1. Create inescoin folder
   ```
@@ -1081,16 +1108,19 @@ For any reason you can reset or cut your blockchain from height (0 for all)
     src/bin/inescoin-node --rpc-bind-port=8087 --p2p-bind-port=3031 --network=MAINNET --prefix=moon
   ```
 
-  8. Start other inescoin-node daemon into other terminal
+  9. Start inescoin-sync (inescoin-node container)
   ```
-    docker exec -it inescoin-node bash
-
-    # root@inescoin-node:/#
-    cd /opt/
-    src/bin/inescoin-node --rpc-bind-port=8087 --p2p-bind-port=3031 --network=MAINNET --prefix=alice
+    cd /opt/src/
+    ./bin/inescoin-sync --prefix=moon
+  ```
+  
+  10. Start inescoin-consumer (inescoin-node container)
+  ```
+    cd /opt/src/
+    ./bin/inescoin-consumer --prefix=moon
   ```
 
-  9. Start miner into other terminal
+  11. Start miner into other terminal
   ```
     docker exec -it inescoin-node bash
 
@@ -1099,7 +1129,7 @@ For any reason you can reset or cut your blockchain from height (0 for all)
     bin/inescoin-miner --wallet-address=0x5967a4016501465CD951a1e3984F772AfDeB5207 --rpc-port=8087 --rpc-ip=0.0.0.0
   ```
 
-  10. Run inescoin explorer http://localhost:8000
+  12. Run inescoin explorer http://localhost:8000
   ```
     docker exec -it inescoin-explorer-phpfpm bash
 
@@ -1117,12 +1147,23 @@ For any reason you can reset or cut your blockchain from height (0 for all)
     composer install
   ```
 
-  12. Replace remote node ip by inescoin-node (container name)
+  13. Replace remote node ip by inescoin-node (container name)
   ```
     sed -i 's#https:\/\/node.inescoin.org\/#http:\/\/inescoin-node:8087\/#g' /www/src/app/App.php
   ```
 
-  13. Kibana
+  14. Kibana
   ```
     Open in browser: http://localhost:5608/
   ```
+
+
+**[Back to top](##Get-started)**
+
+# License
+
+GNU GPL v3
+
+Copyright (c) 2017-2020 Mounir R'Quiba 
+
+**[Back to top](##Get-started)**
