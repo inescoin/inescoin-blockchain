@@ -125,15 +125,17 @@ Response
 
 ```
 {
-  "height": 94966,
-  "topKnowHeight": 94966,
-  "cumulativeDifficulty": 127811977158,
-  "totalTransfer": 94982,
-  "totalTransaction": 94982,
-  "bankAmount": 10496600000000000,
+  "height": 76,
+  "topKnowHeight": 76,
+  "cumulativeDifficulty": 154,
+  "totalTransfer": 80,
+  "totalTransaction": 80,
+  "bankAmount": 9.000076e+17,
   "localPeerConfig": {
-    "host": "<ip>",
-    "port": 3031
+    "host": "188.165.211.215",
+    "port": "3031",
+    "rpcHost": "188.165.211.215",
+    "rpcPort": "8087"
   },
   "isSync": true,
   "peersPersistence": [],
