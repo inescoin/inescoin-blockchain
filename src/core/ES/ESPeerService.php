@@ -61,7 +61,7 @@ class ESPeerService extends ESService
 
 		$output = [];
 		foreach ($response['hits']['hits'] as $hit) {
-			$output[$hit['_id']] = $hit['_source'];
+			$output[$hit['_id']] = (array) $hit['_source'];
 		}
 
 		return $output;
@@ -95,7 +95,7 @@ class ESPeerService extends ESService
 
 		$output = [];
 		foreach ($response['hits']['hits'] as $hit) {
-			$output[$hit['_id']] = $hit['_source'];
+			$output[$hit['_id']] = (array) $hit['_source'];
 		}
 
 		return $output;

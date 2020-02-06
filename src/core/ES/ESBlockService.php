@@ -80,10 +80,10 @@ class ESBlockService extends ESService
 				$this->walletBank[BlockchainConfig::NAME] = $walletBank[BlockchainConfig::NAME];
 			}
 			else {
-				// $this->walletBank[BlockchainConfig::NAME] = [
-				// 	'amount' => 0,
-				// 	'hash' => '',
-				// ];
+				$this->walletBank[BlockchainConfig::NAME] = [
+					'amount' => 0,
+					'hash' => '',
+				];
 			}
 		}
 
@@ -139,7 +139,7 @@ class ESBlockService extends ESService
 					if ($transaction['coinbase'] && $transaction['from'] === BlockchainConfig::NAME) {
 						if ($block['height'] !== 1 && $this->walletBank[BlockchainConfig::NAME]['hash'] !== '' && $this->walletBank[BlockchainConfig::NAME]['hash'] !== $transaction['bankHash']) {
 							var_dump('Bank Hash ERROR <---------------------------------------------> '. $block['height']);
-							var_dump('------------------  ' . $this->walletBank[BlockchainConfig::NAME]['hash'] .' <=> ' . $transaction['bankHash'] . ' ------------------', $transaction);
+							var_dump('------------------  ' . $this->walletBank[BlockchainConfig::NAME]['hash'] .' <=> ' . $transaction['bankHash'] . ' ------------------');
 							break 2;
 							// exit();
 						}

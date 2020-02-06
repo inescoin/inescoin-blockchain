@@ -30,6 +30,10 @@ class RpcClient {
 
     	$response = [];
     	try {
+			var_dump('[RpcClient] [request] [' . $method . '] Url: ' . $host . $uri);
+			if (!empty($params)) {
+				var_dump($params);
+			}
 			$response = $this->client[$host]->request($method, $uri, [ 'json' => $params]);
     	} catch(\Exception $e) {
     		$response['error'] = $e->getMessage();
@@ -52,6 +56,7 @@ class RpcClient {
 		$host = $protocol . $baseUri . $port . '/';
 
 		if (!array_key_exists($host, $this->client)) {
+			var_dump('[RpcClient] [_initClient] base_uri: ' . $host);
 			$this->client[$host] = new \GuzzleHttp\Client([
 				'base_uri' => $host,
 				'request.options' => [

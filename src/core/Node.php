@@ -36,6 +36,11 @@ final class Node
         return $this->miner->getBlockchain()->getMessagesByAddresses($id);
     }
 
+    public function getLastMessagesPool($timestamp = null): array
+    {
+        return $this->miner->getBlockchain()->getLastMessagesPool($timestamp);
+    }
+
     public function getBlockTemplate($data) {
         return $this->miner->getBlockTemplate($data);
     }

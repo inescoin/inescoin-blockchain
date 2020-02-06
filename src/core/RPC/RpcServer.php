@@ -142,6 +142,22 @@ final class RpcServer
                 $data = (array) json_decode($request->getBody()->getContents(), true);
                 $key = md5('POST-' . $request->getUri()->getPath() . '-' . serialize($data));
                 switch ($uri) {
+                    case 'last-messages':
+                        $response = $this->cache->getCache($key);
+                        if ($response) {
+                            return new JsonResponse($response);
+                        }
+
+                        $timestamp = isset($data['timestamp'])
+                            ? (int) $data['timestamp']
+                            : time();
+
+                        $response = $this->node->getLastMessagesPool($timestamp);
+
+                        var_dump('$timestamp: ' . $timestamp);
+                        $this->cache->setCache($key, $response);
+                        return new JsonResponse($response);
+
                     case 'get-blocks-by-height':
                         $response = $this->cache->getCache($key);
                         if ($response) {
@@ -158,6 +174,7 @@ final class RpcServer
 
                         $this->cache->setCache($key, $response);
                         return new JsonResponse($response);
+
                     case 'get-blocks':
                         $response = $this->cache->getCache($key);
                         if ($response) {

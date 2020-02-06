@@ -416,6 +416,11 @@ class Blockchain {
         return $this->es->messagePoolService->getMessagesByAddresses($id);
     }
 
+    public function getLastMessagesPool($timestamp = null)
+    {
+        return $this->es->messagePoolService->getLastMessagesPool($timestamp);
+    }
+
     public function getMemoryPool()
     {
         $response = [

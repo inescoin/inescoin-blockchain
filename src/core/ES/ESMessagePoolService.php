@@ -65,6 +65,81 @@ class ESMessagePoolService extends ESService
 		return $output;
 	}
 
+	public function getLastMessageCreatedAt() {
+		$createdAt = 1;
+		try {
+			$result = $this->client->search([
+			    'index' => $this->index,
+			    'type' => $this->type,
+			    "size" => 1,
+			    'body' => [
+			    	"stored_fields" => [
+					    "createdAt"
+					],
+			        'query' => [
+			            'match_all' => [
+			            	"boost" => 1.2
+			            ]
+			        ],
+			        "sort" => [
+				    	"createdAt" => "desc"
+				  	],
+			    ]
+			]);
+
+			if (isset($result['hits']['hits'][0])) {
+				$createdAt = $result['hits']['hits'][0]['sort'][0];
+			}
+		} catch(\Exception $e) {
+			var_dump($e->getMessage());
+		}
+
+		return (int) $createdAt;
+	}
+
+	public function getLastMessagesPool($toCreatedAt = 1) {
+		$toCreatedAt = $toCreatedAt ? $toCreatedAt : 1;
+
+		$output = [
+			'count' => 0,
+			'messages' => []
+		];
+
+		try {
+			$result = $this->client->search([
+			    'index' => $this->index,
+			    'type' => $this->type,
+			    'size' => 100,
+			    'body' => [
+			    	'query' => [
+			    		"range" => [
+				            "createdAt" => [
+				                "gt" => $toCreatedAt,
+				                "boost" => 2.0
+				            ]
+				        ]
+			        ],
+			        "sort" => [
+				    	"createdAt" => "asc"
+				  	],
+			    ]
+			]);
+		} catch(\Exception $e) {
+			var_dump($e->getMessage());
+		}
+
+		if (!isset($result)) {
+			return $output;
+		}
+
+		$output['count'] = $result['hits']['total']['value'];
+		foreach ($result['hits']['hits'] as $source) {
+			$output['messages'][] = (array) $source['_source'];
+		}
+
+		return $output;
+	}
+
 	public function getMapping() {
 		return [
 		    'message-pool' => [
