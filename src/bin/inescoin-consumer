@@ -24,6 +24,4 @@ if ($helpMe) {
 	die($help['consumer']);
 }
 
-$esService = ESBlockchainProvider::getInstance($prefix);
-
 (new BlockchainConsumer($prefix))->run();
