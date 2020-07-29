@@ -1118,7 +1118,7 @@ For any reason you can reset or cut your blockchain from height (0 for all)
   4. Build & start containers
   ```
     cd ./inescoin-blocchain
-    docker-composer up
+    docker-compose up
   ```
 
   5. Run inescoin-node container
