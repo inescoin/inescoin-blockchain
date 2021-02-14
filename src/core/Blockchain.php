@@ -338,7 +338,7 @@ class Blockchain {
             }
         } else {
             $mTransaction = false;
-            var_dump('[Blockchain] [ERROR] Invalid transaction sent to blockchain');
+            $this->logger->error('[Blockchain] [ERROR] Invalid transaction sent to blockchain');
             return [
                 'error' => 'Invalid transaction sent to blockchain'
             ];
@@ -502,11 +502,10 @@ class Blockchain {
         }
 
         if (!$this->isValidTransactions($block)) {
-            var_dump('[Blockchain] [add] [ERROR] : ' . $block->getHeight());
+            $this->logger->error('[Blockchain] [add] Height => ' . $block->getHeight());
             return false;
         }
 
-        var_dump('[Blockchain] [add] Height => ' . $block->getHeight());
         $this->logger->info('[Blockchain] [add] Height => ' . $block->getHeight());
 
         $this->saveBlockToDB($block);
@@ -520,14 +519,14 @@ class Blockchain {
         $previousBlock = $this->getLastBlock();
 
         if (!isset($blocks[0])) {
-            var_dump('----- AA1');
+            $this->logger->info('----- AA1 => block->getHeight: ' . $block->getHeight());
             return false;
         }
 
         $firstBlock = $blocks[0];
 
         if (empty($firstBlock)) {
-            var_dump('----- AA2');
+            $this->logger->info('----- AA2 => block->getHeight: ' . $block->getHeight());
             return false;
         }
 
@@ -544,18 +543,17 @@ class Blockchain {
                 }
 
                 if (!$previousBlock->isNextValid($block)) {
-                    var_dump('----- AA3', $previousBlock->getHeight(), $block->getHeight());
+                    $this->logger->info('----- AA3 : previousBlock->getHeight:' . $previousBlock->getHeight() . ' block->getHeight:' . $block->getHeight());
                     return false;
                 }
             }
 
             if (!$this->isValidTransactions($block)) {
-                var_dump('[Blockchain] [add] [ERROR] : ' . $block->getHeight());
+                $this->logger->info('[Blockchain] [add] [ERROR] : ' . $block->getHeight());
                 return false;
             }
 
             $previousBlock = $block;
-            // var_dump('[Blockchain] [buldAdd] Height => ' . $block->getHeight());
             $this->logger->info('[Blockchain] [buldAdd] Height => ' . $block->getHeight());
         }
 
@@ -566,8 +564,8 @@ class Blockchain {
         $endTime = microtime(true);
         $execTime = $endTime - $startTime;
         $nbBlocks = count($blocks);
-        var_dump('[Blockchain] [buldAdd] ' . $nbBlocks . ' blocks added in ' . $execTime .' sec');
 
+        $this->logger->info('[Blockchain] [buldAdd] ' . $nbBlocks . ' blocks added in ' . $execTime .' sec');
         return true;
     }
 
@@ -639,12 +637,12 @@ class Blockchain {
 
     public function scanFromZero($hardScan = false , $resetMode = false)
     {
-        var_dump('[Blockchain] Start Scan...');
+        $this->logger->info('[Blockchain] Start Scan...');
 
         $lastBlock = $this->getLastBlock();
 
         if (null === $lastBlock) {
-            var_dump('[Blockchain] Last block is null');
+            $this->logger->info('[Blockchain] Start Scan...');
             return true;
         }
 
@@ -668,24 +666,24 @@ class Blockchain {
                 return true;
             }
 
-            var_dump('[Blockchain] Scan from ' . $fromBlockHeight . ' to ' . $toBlockHeight . ' on ' . $topBlockHeight . ' Blocks');
             $this->logger->info('[Blockchain] Scan from ' . $fromBlockHeight . ' to ' . $toBlockHeight . ' on ' . $topBlockHeight . ' Blocks');
 
             foreach ($blocks as $block) {
                 if (null !== $previousBlock) {
                     if ($previousBlock->getHeight() === $block->getHeight()) {
-                        var_dump('[Blockchain] $previousBlock->getHeight === $block->getHeight');
+                        $this->logger->info('[Blockchain] $previousBlock->getHeight === $block->getHeight');
                         continue;
                     }
 
                     if (!$previousBlock->isNextValid($block)) {
-                        var_dump('[Blockchain] [error] $previousBlock->isNextValid');
+                        $this->logger->info('[Blockchain] [error] $previousBlock->isNextValid');
+
                         return false;
                     }
                 }
 
                 if ($hardScan && !$this->isValidTransactions($block)) {
-                    var_dump('[Blockchain] [add] [ERROR] Block: ' . $block->getHeight());
+                    $this->logger->info('[Blockchain] [add] [ERROR] Block: ' . $block->getHeight());
                     return false;
                 }
 
@@ -717,7 +715,7 @@ class Blockchain {
         }
 
         if (!is_array($transactions) || empty($transactions)) {
-            var_dump('[Blockchain][isValidTransactions] Empty transactions');
+            $this->logger->info('[Blockchain][isValidTransactions] Empty transactions');
             return false;
         }
 

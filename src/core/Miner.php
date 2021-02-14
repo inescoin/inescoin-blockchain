@@ -8,6 +8,7 @@ namespace Inescoin;
 
 use Inescoin\Block;
 
+use Inescoin\LoggerService;
 use Inescoin\BlockchainConfig;
 use Inescoin\MerkleTree;
 
@@ -29,6 +30,7 @@ final class Miner
     {
         $this->blockchain = $blockchain;
         $this->hashDifficulty = $hashDifficulty;
+        $this->logger = (LoggerService::getInstance())->getLogger();
     }
 
     public function getBlockTemplate($data) {
@@ -74,24 +76,16 @@ final class Miner
         $dataPool = $this->getBlockchain()->getDataPool();
         $dataPool[] = $minerTransactionReward->getInfos();
         $countTransaction = count($dataPool);
-        var_dump('--- 1');
 
         $dataEncoded = Block::getDataEncoded($dataPool);
-        var_dump('--- 2');
 
         // Check empty block timestamp
         $timeLeft = time() - ($previousBlockCreatedAt + BlockchainConfig::NEXT_EMPTY_TIMESTAMP);
         if ($countTransaction === 1 && $timeLeft < 0) {
             $output['error'] = 'Time left for next empty block: ' . $timeLeft;
             $output['timeLeft'] = $timeLeft * -1;
-            var_dump('Empty block');
             return $output;
         }
-
-        var_dump('--- 3', $timeLeft);
-
-        var_dump('[Miner] ----------------------> diff: ' . $previousCumulativeDifficulty);
-        var_dump('[Miner] ----------------------> tx: ' . $countTransaction);
 
         $output = [
             'id' => $data['walletAddress'],
@@ -149,18 +143,16 @@ final class Miner
         $this->pool[$data['walletAddress']]['hash'] = $data['hash'];
         $this->pool[$data['walletAddress']]['nonce'] = $data['nonce'];
 
-        var_dump("Nonce detected ---> " . $this->pool[$data['walletAddress']]['nonce']);
+        $this->logger->info("[Miner] Nonce detected ---> " . $this->pool[$data['walletAddress']]['nonce']);
 
         $block = Block::toBlock($this->pool[$data['walletAddress']]);
         $block->setMerkelRoot($this->pool[$data['walletAddress']]['merkleRoot']);
 
         $lastBlock = $this->getBlockchain()->getLastBlock();
         if (!$lastBlock || $lastBlock->isNextValid($block)) {
-            var_dump("Block submitted ok, start blockchain push...");
+            $this->logger->info("[Miner] Block submitted ok, start blockchain push...");
             if ($this->getBlockchain()->add($block)) {
-                var_dump([
-                    'done' => 'ok'
-                ]);
+                $this->logger->info("[Miner] Done OK!");
                 return [
                     'done' => 'ok'
                 ];
@@ -168,9 +160,8 @@ final class Miner
         }
 
         sleep(30);
-        var_dump([
-            'error' => 'Rejected block'
-        ]);
+
+        $this->logger->info("[Miner] Rejected block!");
         return [
             'error' => 'Rejected block'
         ];

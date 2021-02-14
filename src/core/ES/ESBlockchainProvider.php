@@ -6,6 +6,8 @@
 
 namespace Inescoin\ES;
 
+use Inescoin\BlockchainConfig;
+
 class ESBlockchainProvider {
 
 	private $blockService;
@@ -120,7 +122,7 @@ class ESBlockchainProvider {
 
 	}
 
-	public static function getInstance($prefix = '')
+	public static function getInstance($prefix = BlockchainConfig::NAME)
 	{
 		if (null === self::$esBlockchainProviderInstance) {
 			self::$esBlockchainProviderInstance = new ESBlockchainProvider($prefix);

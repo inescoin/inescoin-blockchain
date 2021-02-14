@@ -17,15 +17,15 @@ class ESDomainService extends ESService
 
 	protected $index = 'blockchain-domain';
 
-	private $logger;
+	public $logger;
 
 	public function __construct($prefix = '') {
 		$this->logger = (LoggerService::getInstance())->getLogger();
 		$this->index = $prefix ? $prefix . '_' . $this->index : $this->index;
 
 		$this->transactionService = ESService::getInstance('transaction', $prefix);
-
 		parent::__construct();
+
 	}
 
 	public function getByAddress($addressList = BlockchainConfig::NAME, $size = 100, $page = 0)
@@ -46,7 +46,7 @@ class ESDomainService extends ESService
 			]);
  		} catch (\Exception $e) {
 			$result['error'] = $e->getMessage();
-			// var_dump('ERROR --> ' . $response['error']);
+			var_dump('ERROR --> ' . self::class . ' | ' . $response['error']);
 		}
 
 		if (isset($result['error']) || !isset($result['hits']['hits'][0])) {
@@ -97,7 +97,7 @@ class ESDomainService extends ESService
 			]);
  		} catch (\Exception $e) {
  			$response['error'] = $e->getMessage();
-			// var_dump('ERROR --> ' . $response['error']);
+			var_dump('ERROR --> ' . self::class . ' | ' . $response['error']);
 		}
 
 		if (isset($response['error']) || !isset($response['hits']['hits'][0])) {
@@ -136,7 +136,7 @@ class ESDomainService extends ESService
 			    ]
 			]);
 		} catch(\Exception $e) {
-			var_dump($e->getMessage());
+			$this->logger->error('[ESBlockService] ' . $e->getMessage());
 		}
 
 		if (!isset($result)) {

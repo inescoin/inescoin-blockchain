@@ -21,7 +21,7 @@ class ESBlockTempService extends ESService
 
 	private $transactionService;
 
-	private $logger;
+	public $logger;
 
 	private $walletBank = [];
 
@@ -47,8 +47,8 @@ class ESBlockTempService extends ESService
 	public function bulkBlocks($blocks, $resetMode = false) {
 		$blocksList = [];
 
+		$this->logger->info('[ESBlockTempService] Start bank import...');
 
-		var_dump('[ESBlockTempService] Start bank import...');
 		if (is_array($blocks)) {
 			$addressBalanceTo = [];
 			$addressBalanceFrom = [];
@@ -117,7 +117,7 @@ class ESBlockTempService extends ESService
 			    ]
 			]);
 		} catch(\Exception $e) {
-			var_dump($e->getMessage());
+			$this->logger->error('[ESBlockService] ' . $e->getMessage());
 		}
 
 		if (!isset($result)) {
@@ -157,7 +157,7 @@ class ESBlockTempService extends ESService
 			    ]
 			]);
 		} catch(\Exception $e) {
-			var_dump($e->getMessage());
+			$this->logger->error('[ESBlockService] ' . $e->getMessage());
 		}
 
 		if (!isset($result)) {
@@ -201,7 +201,7 @@ class ESBlockTempService extends ESService
 				$height = $result['hits']['hits'][0]['_id'];
 			}
 		} catch(\Exception $e) {
-			var_dump($e->getMessage());
+			$this->logger->error('[ESBlockService] ' . $e->getMessage());
 		}
 
 		return (int) $height;
@@ -235,7 +235,7 @@ class ESBlockTempService extends ESService
 				$cumulativeDifficulty = $result['hits']['hits'][0]['sort'][0];
 			}
 		} catch(\Exception $e) {
-			var_dump($e->getMessage());
+			$this->logger->error('[ESBlockService] ' . $e->getMessage());
 		}
 
 		return (int) $cumulativeDifficulty;
@@ -268,7 +268,7 @@ class ESBlockTempService extends ESService
 			    ]
 			]);
 		} catch(\Exception $e) {
-			var_dump($e->getMessage());
+			$this->logger->error('[ESBlockService] ' . $e->getMessage());
 		}
 
 		if (!isset($result['hits']['hits'][0])) {
@@ -316,7 +316,7 @@ class ESBlockTempService extends ESService
 			    ]
 			]);
 		} catch(\Exception $e) {
-			var_dump($e->getMessage());
+			$this->logger->error('[ESBlockService] ' . $e->getMessage());
 		}
 
 		$output = [

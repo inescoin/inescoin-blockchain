@@ -7,6 +7,7 @@
 namespace Inescoin\ES;
 
 use Inescoin\LoggerService;
+use Inescoin\BlockchainConfig;
 
 use DateTimeImmutable;
 
@@ -16,7 +17,7 @@ class ESPeerService extends ESService
 
 	protected $index = 'blockchain-peer';
 
-	private $logger;
+	public $logger;
 
 	public function __construct($prefix = '') {
 		$this->logger = (LoggerService::getInstance())->getLogger();
@@ -56,12 +57,14 @@ class ESPeerService extends ESService
 			]);
  		} catch (\Exception $e) {
  			$response['error'] = $e->getMessage();
-			// var_dump('ERROR --> ' . $response['error']);
+			$this->logger->error('[ESPeerService] ERROR --> ' . self::class . ' | ' . $response['error']);
 		}
 
 		$output = [];
-		foreach ($response['hits']['hits'] as $hit) {
-			$output[$hit['_id']] = (array) $hit['_source'];
+		if (array_key_exists('hits', $response)) {
+			foreach ($response['hits']['hits'] as $hit) {
+				$output[$hit['_id']] = (array) $hit['_source'];
+			}
 		}
 
 		return $output;
@@ -90,7 +93,7 @@ class ESPeerService extends ESService
 			]);
  		} catch (\Exception $e) {
  			$response['error'] = $e->getMessage();
-			// var_dump('ERROR --> ' . $response['error']);
+			$this->logger->error('[ESPeerService] ERROR --> ' . self::class . ' | ' . $response['error']);
 		}
 
 		$output = [];

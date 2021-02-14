@@ -8,6 +8,7 @@ namespace Inescoin\ES;
 
 use Inescoin\Transaction;
 use Inescoin\LoggerService;
+use Inescoin\BlockchainConfig;
 
 class ESTransactionPoolService extends ESService
 {
@@ -45,7 +46,7 @@ class ESTransactionPoolService extends ESService
 			]);
  		} catch (\Exception $e) {
  			$response['error'] = $e->getMessage();
-			var_dump('ERROR --> ' . $response['error']);
+			var_dump('ERROR --> ' . self::class . ' | ' . $response['error']);
 		}
 
 		if (isset($response['error'])) {

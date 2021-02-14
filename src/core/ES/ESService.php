@@ -9,6 +9,7 @@ namespace Inescoin\ES;
 use Elasticsearch\ClientBuilder;
 
 use Inescoin\LoggerService;
+use Inescoin\BlockchainConfig;
 
 class ESService
 {
@@ -22,7 +23,7 @@ class ESService
 
 	public $client;
 
-	private $logger;
+	public $logger;
 
 	public function __construct($prefix = '') {
 		$this->logger = (LoggerService::getInstance())->getLogger();
@@ -42,7 +43,7 @@ class ESService
 			$index = $this->prefix . $this->index;
 		}
 
-		$this->logger->info("[ESService][_newIndex] Index: $index  | nbShared: $nbShared | $nbReplica: $nbReplica");
+		// $this->logger->info("[ESService][_newIndex] Index: $index  | nbShared: $nbShared | $nbReplica: $nbReplica");
 
 		$params = [
 		    'index' => $index,
@@ -73,7 +74,7 @@ class ESService
 
 	protected function _removeIndex()
 	{
-		$this->logger->info("[ESService][_removeIndex] Index: " . $this->index);
+		// $this->logger->info("[ESService][_removeIndex] Index: " . $this->index);
 		if (!empty($this->index) && $this->client->indices()->exists(['index' => $this->index])) {
 			return $this->client->indices()->delete([
 			    'index' => $this->index
@@ -85,7 +86,7 @@ class ESService
 	}
 
 	protected function _getIndexes($clean = false) {
-		$this->logger->info("[ESService][_getIndexes]");
+		// $this->logger->info("[ESService][_getIndexes]");
 
 		$mapping = $this->client->indices()->getMapping();
 
@@ -107,7 +108,7 @@ class ESService
 	}
 
 	protected function _index($index, $type, $id, $body = [], $refresh = false) {
-		$this->logger->info("[ESService][_index] Index: $index  | Type: $type | Id: $id  | Refresh: " . (int) $refresh . " | Body: " . serialize($body));
+		// $this->logger->info("[ESService][_index] Index: $index  | Type: $type | Id: $id  | Refresh: " . (int) $refresh . " | Body: " . serialize($body));
 
 		$response = [];
 		try {
@@ -125,14 +126,14 @@ class ESService
 			$response =  $this->client->index($params);
 		} catch (\Exception $e) {
 			$response['error'] = $e->getMessage();
-			// var_dump('ERROR --> ' . $response['error']);
+			var_dump('ERROR --> ' . self::class . ' | ' . $response['error']);
 		}
 
 		return $response;
 	}
 
 	protected function _update($index, $type, $id, $body = [], $refresh = false) {
-		$this->logger->info("[ESService][_update] Index: $index  | Type: $type | Id: $id  | Refresh: " . (int) $refresh . " | Body: " . serialize($body));
+		// $this->logger->info("[ESService][_update] Index: $index  | Type: $type | Id: $id  | Refresh: " . (int) $refresh . " | Body: " . serialize($body));
 
 		$response = [];
 		try {
@@ -150,7 +151,7 @@ class ESService
 			$response =  $this->client->update($params);
 		} catch (\Exception $e) {
 			$response['error'] = $e->getMessage();
-			// var_dump('ERROR --> ' . $response['error']);
+			var_dump('ERROR --> ' . self::class . ' | ' . $response['error']);
 		}
 
 		return $response;
@@ -158,7 +159,7 @@ class ESService
 
 	protected function _exists($index, $type, $id)
 	{
-		$this->logger->info("[ESService][_exists] Index: $index  | Type: $type | Id: $id ");
+		// $this->logger->info("[ESService][_exists] Index: $index  | Type: $type | Id: $id ");
 
 		$response = [];
 		try {
@@ -171,7 +172,7 @@ class ESService
 			$response =  $this->client->exists($params);
 		} catch (\Exception $e) {
 			$response['error'] = $e->getMessage();
-			// var_dump('ERROR --> ' . $response['error']);
+			var_dump('ERROR --> ' . self::class . ' | ' . $response['error']);
 		}
 
 		return $response;
@@ -199,13 +200,13 @@ class ESService
 			try {
 				$this->client->bulk($params);
 			} catch (\Exception $e) {
-				var_dump('ERROR --> ' . $e->getMessage());
+				var_dump('ERROR --> ' . self::class . ' | ' . $e->getMessage());
 			}
 		}
 	}
 
 	protected function _get($index, $type, $id) {
-		$this->logger->info("[ESService][_get] Index: $index  | Type: $type | Id: $id");
+		// $this->logger->info("[ESService][_get] Index: $index  | Type: $type | Id: $id");
 
 		$response = [];
 
@@ -217,7 +218,7 @@ class ESService
 			]);
 		} catch (\Exception $e) {
 			$response['error'] = $e->getMessage();
-			// var_dump('ERROR --> ' . $response['error']);
+			var_dump('ERROR --> ' . self::class . ' | ' . $response['error']);
 		}
 
 		return $response;
@@ -258,7 +259,7 @@ class ESService
 	}
 
 	protected function _deleteByQuery($index, $type, $height, $key = 'height') {
-		$this->logger->info("[ESService][_deleteByQuery] Index: $index | Type: $type | Height: $height | Key: $key");
+		// $this->logger->info("[ESService][_deleteByQuery] Index: $index | Type: $type | Height: $height | Key: $key");
 
 		try {
 			$response = $this->client->deleteByQuery([
@@ -276,13 +277,13 @@ class ESService
 			    ]);
 		} catch (\Exception $e) {
 			$response['error'] = $e->getMessage();
-			// var_dump('ERROR --> ' . $response['error']);
+			var_dump('ERROR --> ' . self::class . ' | ' . $response['error']);
 		}
 		return $response;
 	}
 
 	protected function _search($index, $type, $matched = [], $size = 1000) {
-		$this->logger->info("[ESService][_search] Index: $index | Type: $type | Size: $size | Query: " . serialize($matched));
+		// $this->logger->info("[ESService][_search] Index: $index | Type: $type | Size: $size | Query: " . serialize($matched));
 
 		try {
 			$response = $this->client->search([
@@ -298,14 +299,13 @@ class ESService
 			]);
  		} catch (\Exception $e) {
 			$response['error'] = $e->getMessage();
-			// var_dump('ERROR --> ' . $response['error']);
+			$this->logger->error('[ESService] ERROR --> ' . $response['error']);
 		}
 		return $response;
 	}
 
 	protected function _all($index, $type) {
-		$this->logger->info("[ESService][_all] Index: $index  | Type: $type");
-		// var_dump("[ESService][_all] Index: $index  | Type: $type");
+		// $this->logger->info("[ESService][_all] Index: $index  | Type: $type");
 
 		try {
 			$response = $this->client->search([
@@ -323,7 +323,7 @@ class ESService
 			]);
  		} catch (\Exception $e) {
  			$response['error'] = $e->getMessage();
-			// var_dump('ERROR --> ' . $response['error']);
+			$this->logger->error('[ESService] ERROR --> ' . $response['error']);
 		}
 
 		return $response;
@@ -371,7 +371,7 @@ class ESService
 		return $this->_all($this->index, $this->type);
 	}
 
-	public static function getInstance($type, $prefix = '') {
+	public static function getInstance($type, $prefix = BlockchainConfig::NAME) {
      	$instanceName = "Inescoin\\ES\\ES" . ucfirst($type) . "Service";
 
     	if(null === self::$esInstance) {
@@ -380,7 +380,7 @@ class ESService
        		self::$esInstance = new $instanceName($prefix);
     	}
 
-		self::$esInstance->logger->info('New instance: ' . $instanceName  . ' | Prefix: ' . $prefix);
+		// self::$esInstance->logger->info('New instance: ' . $instanceName  . ' | Prefix: ' . $prefix);
 
     	return self::$esInstance;
    }

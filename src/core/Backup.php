@@ -6,6 +6,7 @@
 
 namespace Inescoin;
 
+use Inescoin\LoggerService;
 use Inescoin\ES\ESBlockchainProvider;
 
 class Backup
@@ -30,7 +31,7 @@ class Backup
 		$this->_initFilename($fileName);
 
 		$time = time();
-		$this->folder = getcwd() . '/inescoin-blocchain-' . $time;
+		$this->folder = getcwd() . '/inescoin-blockchain-' . $time;
 		if (!is_dir($this->folder)) {
 			mkdir($this->folder, 0777);
 		}
@@ -203,7 +204,7 @@ class Backup
 		}
 
 		$time = time();
-		$this->folder = $this->folder; //getcwd() . '/inescoin-blocchain-' . $time . '/';
+		$this->folder = $this->folder; //getcwd() . '/inescoin-blockchain-' . $time . '/';
 		$backupPhar->extractTo($this->folder);
 
 		if ($this->force) {

@@ -6,6 +6,8 @@
 
 namespace Inescoin\ES;
 
+use Inescoin\BlockchainConfig;
+
 class ESMessageService extends ESService
 {
 	protected $type = 'message';

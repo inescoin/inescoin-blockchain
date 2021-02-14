@@ -9,6 +9,7 @@ namespace Inescoin;
 use Inescoin\Node\Transfer;
 use Inescoin\Node\P2pServer;
 use Inescoin\Node\Peer;
+use Inescoin\LoggerService;
 
 final class Node
 {
@@ -18,12 +19,16 @@ final class Node
 
     private $p2pServer;
 
+    public $logger;
+
     public function __construct(Miner $miner, P2pServer $p2pServer)
     {
         $this->keys = PKI::generateRSAKeys();
 
         $this->miner = $miner;
         $this->p2pServer = $p2pServer;
+
+        $this->logger = (LoggerService::getInstance())->getLogger();
     }
 
     public function getLastBlocks($limit = 10, $page = 1, $original = false)
@@ -72,19 +77,19 @@ final class Node
 
     public function broadcastMinedBlock()
     {
-        var_dump("Broadcast mined block to peers strarted... ");
+        $this->logger->info("[Node] Broadcast mined block to peers strarted... ");
         $this->p2pServer->broadcastMinedBlock();
     }
 
     public function pushMemoryPool($data)
     {
-        var_dump('[pushMemoryPool] broadcast start...');
+        $this->logger->info('[Node] [pushMemoryPool] broadcast start...');
         $transaction = $this->miner->push($data);
         if (!isset($transaction['error'])) {
-            var_dump('[pushMemoryPool] broadcast done!');
+            $this->logger->info('[Node] [pushMemoryPool] broadcast done!');
             $this->p2pServer->broadcastMemoryPool($data);
         } else {
-            var_dump($transaction);
+            $this->logger->info($transaction);
         }
         // return [];
         return $transaction;
@@ -108,13 +113,13 @@ final class Node
 
     public function pushMemoryMessagePool($data)
     {
-        var_dump('[pushMemoryMessagePool] broadcast start...');
+        $this->logger->info('[Node] [pushMemoryMessagePool] broadcast start...');
         $message = $this->miner->pushMessagePool($data);
         if (!isset($message['error'])) {
-            var_dump('[pushMemoryMessagePool] broadcast done!');
+            $this->logger->info('[Node] [pushMemoryMessagePool] broadcast done!');
             $this->p2pServer->broadcastMemoryMessagePool($data);
         } else {
-            var_dump($message);
+            $this->logger->info('[Node] ' . $message);
         }
         // return [];
         return $message;
@@ -142,7 +147,7 @@ final class Node
 
     public function connect(string $host, int $port): void
     {
-        var_dump("[Node][connect] Peer connect to $host:$port");
+        $this->logger->info("[Node][connect] Peer connect to $host:$port");
         $this->p2pServer->connect($host, $port);
     }
 
@@ -178,10 +183,10 @@ final class Node
                         $_part = PKI::decryptFromPrivateKey(hex2bin($message['d']), $pk);
                         $output .= $_part;
                     } else {
-                        var_dump('[Node] [checkFromMemoryPool] ERROR signature position ' . $position . '/' . $cMessage);
+                        $this->logger->info('[Node] [checkFromMemoryPool] ERROR signature position ' . $position . '/' . $cMessage);
                     }
                 } catch(\Exception $e) {
-                    var_dump('[ERROR] : @323');
+                    $this->logger->info('[ERROR] : @323');
                 }
 
             }

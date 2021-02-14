@@ -17,7 +17,7 @@ class ESTodoService extends ESService
 
 	protected $index = 'blockchain-todo';
 
-	private $logger;
+	public $logger;
 
 	public function __construct($prefix = '') {
 		$this->logger = (LoggerService::getInstance())->getLogger();
@@ -87,7 +87,7 @@ class ESTodoService extends ESService
 			]);
  		} catch (\Exception $e) {
  			$response['error'] = $e->getMessage();
-			// var_dump('ERROR --> ' . $response['error']);
+			var_dump('ERROR --> ' . self::class . ' | ' . $response['error']);
 		}
 
 		return $response;

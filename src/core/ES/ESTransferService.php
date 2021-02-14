@@ -16,7 +16,7 @@ class ESTransferService extends ESService
 	protected $type = 'transfer';
 
 	protected $index = 'blockchain-transfer';
-	private $logger;
+	public $logger;
 
 	public function __construct($prefix = '') {
 		$this->logger = (LoggerService::getInstance())->getLogger();
@@ -48,7 +48,7 @@ class ESTransferService extends ESService
 			var_dump('ERROR --> 1');
  		} catch (\Exception $e) {
 			$result['error'] = $e->getMessage();
-			var_dump('ERROR --> ' . $response['error']);
+			var_dump('ERROR --> ' . self::class . ' | ' . $response['error']);
 		}
 
 		if (isset($result['error']) || !isset($result['hits']['hits'][0])) {
@@ -87,7 +87,7 @@ class ESTransferService extends ESService
 			]);
  		} catch (\Exception $e) {
 			$result['error'] = $e->getMessage();
-			// var_dump('ERROR --> ' . $response['error']);
+			var_dump('ERROR --> ' . self::class . ' | ' . $response['error']);
 		}
 
 		if (isset($result['error']) || !isset($result['hits']['hits'][0])) {

@@ -17,7 +17,7 @@ class ESWebsiteService extends ESService
 
 	protected $index = 'blockchain-website';
 
-	private $logger;
+	public $logger;
 
 	public function __construct($prefix = '') {
 		$this->logger = (LoggerService::getInstance())->getLogger();
@@ -54,7 +54,7 @@ class ESWebsiteService extends ESService
 			]);
  		} catch (\Exception $e) {
 			$result['error'] = $e->getMessage();
-			// var_dump('ERROR --> ' . $response['error']);
+			var_dump('ERROR --> ' . self::class . ' | ' . $response['error']);
 		}
 
 		if (isset($result['error']) || !isset($result['hits']['hits'][0])) {

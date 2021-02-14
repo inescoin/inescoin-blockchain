@@ -69,19 +69,19 @@ class ESBankService extends ESService
 		try {
 			$res = $this->client->update($params);
 		} catch (\Exception $e) {
-			var_dump('[ESBankService] [updateAmount] ERROR --> ', $e->getMessage());
+			$this->logger->info('[ESBankService] [updateAmount] ERROR --> ' . $e->getMessage());
 		}
 	}
 
 	public function incrementAmount($id, $amount, $height, $hash = '')
 	{
-		// var_dump('-------------------> incrementAmount', $id, $amount);
+		$this->logger->info('[ESBankService] [incrementAmount] ERROR --> id: ' .  $id . ' | amount: ' . $amount . ' | height: ' . $height . ' | hash: ' . $hash);
 		$this->updateAmount($id, $amount, $height, true, $hash);
 	}
 
 	public function decrementAmount($id, $amount, $height, $hash = '')
 	{
-		// var_dump('-------------------> decrementAmount', $id, $amount);
+		$this->logger->info('[ESBankService] [decrementAmount] ERROR --> id: ' .  $id . ' | amount: ' . $amount . ' | height: ' . $height . ' | hash: ' . $hash);
 		$this->updateAmount($id, $amount, $height, false, $hash);
 	}
 

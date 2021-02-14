@@ -7,6 +7,7 @@
 namespace Inescoin;
 
 use Inescoin\ZeroPrefix;
+use Inescoin\LoggerService;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ConnectException;
@@ -29,6 +30,8 @@ class MinerPool
 		$this->walletAddress = $walletAddress;
 
 		$this->hashDifficulty = new ZeroPrefix();
+
+		$this->logger = (LoggerService::getInstance())->getLogger();
 	}
 
 	private function _jsonRPC($method = 'POST', $uri = '', $params = [])
@@ -77,7 +80,8 @@ class MinerPool
 			    $blockTemplate = (array) $blockTemplate;
 			    if (isset($blockTemplate['error'])) {
 			    	$timer = $blockTemplate['timeLeft'];
-	    			var_dump($timer . ' sec left for next empty block');
+
+	    			$this->logger->info('[MinerPool] ' . $timer . ' sec left for next empty block');
 	    			sleep(10);
 			    	continue;
 			    }
@@ -85,9 +89,9 @@ class MinerPool
 	    		$difficulty = (int) $blockTemplate['difficulty'];
 	    		$txCount = $blockTemplate['countTransaction'] ?? 1;
 
-			    var_dump('[MinerPool] Get new block template at height => ' . $blockTemplate['height']);
-			    var_dump('[MinerPool] Miner start at difficulty => ' . $difficulty);
-			    var_dump('[MinerPool] Tx count => ' . $txCount);
+			    $this->logger->info('[MinerPool] Get new block template at height => ' . $blockTemplate['height']);
+			    $this->logger->info('[MinerPool] Miner start at difficulty => ' . $difficulty);
+			    $this->logger->info('[MinerPool] Tx count => ' . $txCount);
 
 		    	$blockTemplate['nonce'] = 0;
 			    while (true) {
@@ -95,15 +99,14 @@ class MinerPool
 
 		    		if ($this->hashDifficulty->hashMatchesDifficulty($hash, $difficulty)) {
 		    			$response = $this->submitBlock($hash, $blockTemplate['nonce']);
-		    			var_dump('[MinerPool] Nonce => ' . $blockTemplate['nonce']);
-		    			var_dump('[MinerPool]', $response, $hash, $blockTemplate['nonce']);
+		    			$this->logger->info('[MinerPool] Response : ' . $response . ' | hash : ' . $hash . ' | nonce : ' . $blockTemplate['nonce']);
 		    			break;
 		    		}
 
 		    		++$blockTemplate['nonce'];
 		    	}
     		} catch (ConnectException $e) {
-	    	    var_dump($e->getMessage());
+			    $this->logger->error('[MinerPool] error => ' . $e->getMessage());
     			sleep(30);
     		}
 

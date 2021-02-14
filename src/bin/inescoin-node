@@ -42,7 +42,7 @@ $params = getopt('', [
 
 
 $rpcBindIp = $params['rpc-bind-ip'] ?? '0.0.0.0' ;
-$rpcBindPort = $params['rpc-bind-port'] ?? 8086;
+$rpcBindPort = $params['rpc-bind-port'] ?? 8087;
 $p2pBindIp = $params['p2p-bind-ip'] ?? '0.0.0.0';
 $p2pBindPort = $params['p2p-bind-port'] ?? 3030;
 $dataFolder = $params['data-folder'] ?? './';

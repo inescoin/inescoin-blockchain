@@ -16,7 +16,7 @@ class ESTransactionService extends ESService
 	protected $type = 'transaction';
 
 	protected $index = 'blockchain-transaction';
-	private $logger;
+	public $logger;
 
 	public function __construct($prefix = '') {
 		$this->logger = (LoggerService::getInstance())->getLogger();
@@ -47,7 +47,7 @@ class ESTransactionService extends ESService
 			]);
  		} catch (\Exception $e) {
  			$response['error'] = $e->getMessage();
-			var_dump('ERROR --> ' . $response['error']);
+			var_dump('ERROR --> ' . self::class . ' | ' . $response['error']);
 		}
 
 		if (isset($response['error'])) {
@@ -131,7 +131,7 @@ class ESTransactionService extends ESService
 			]);
  		} catch (\Exception $e) {
 			$result['error'] = $e->getMessage();
-			// var_dump('ERROR --> ' . $response['error']);
+			var_dump('ERROR --> ' . self::class . ' | ' . $response['error']);
 		}
 
 		if (isset($result['error']) || !isset($result['hits']['hits'][0])) {
@@ -166,7 +166,7 @@ class ESTransactionService extends ESService
 			]);
  		} catch (\Exception $e) {
 			$result['error'] = $e->getMessage();
-			// var_dump('ERROR --> ' . $response['error']);
+			var_dump('ERROR --> ' . self::class . ' | ' . $response['error']);
 		}
 
 		if (isset($result['error']) || !isset($result['hits']['hits'][0])) {
@@ -200,7 +200,7 @@ class ESTransactionService extends ESService
 			]);
  		} catch (\Exception $e) {
 			$result['error'] = $e->getMessage();
-			// var_dump('ERROR --> ' . $response['error']);
+			var_dump('ERROR --> ' . self::class . ' | ' . $response['error']);
 		}
 
 		if (isset($result['error']) || !isset($result['hits']['hits'][0])) {

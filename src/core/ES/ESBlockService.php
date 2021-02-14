@@ -21,7 +21,7 @@ class ESBlockService extends ESService
 
 	private $transactionService;
 
-	private $logger;
+	public $logger;
 
 	private $walletBank = [];
 
@@ -33,6 +33,7 @@ class ESBlockService extends ESService
 		$this->todoService = ESService::getInstance('todo', $prefix);
 
 		$this->index = $prefix ? $prefix . '_' . $this->index : $this->index;
+
 		parent::__construct();
 	}
 
@@ -41,7 +42,7 @@ class ESBlockService extends ESService
 			$body = (array) json_decode($body);
 		}
 
-		$this->logger->info("[ESBlockService][index] Id: $id | Body: " . serialize($body));
+		// $this->logger->info("[ESBlockService][index] Id: $id | Body: " . serialize($body));
 
 		if (!$this->exists($id)) {
 			$this->bulkBlocks([$body]);
@@ -59,7 +60,7 @@ class ESBlockService extends ESService
 		$walletBank = $this->bankService->getAddressBalances(BlockchainConfig::NAME);
 
 		if (empty($blocks)) {
-			var_dump('[ESBlockService] [bulkBlocks] No block found');
+			$this->logger->info('[ESBlockService] [bulkBlocks] No block found');
 			return false;
 		}
 
@@ -72,7 +73,7 @@ class ESBlockService extends ESService
 			];
 		} else {
 			if ($resetMode && !isset($walletBank[BlockchainConfig::NAME])) {
-				var_dump('[ESBlockService] [$walletBank] [$resetMode]');
+				$this->logger->info('[ESBlockService] [$walletBank] [$resetMode]');
 				exit();
 			}
 
@@ -87,7 +88,7 @@ class ESBlockService extends ESService
 			}
 		}
 
-		var_dump('[ESBlockService] Start bank import...');
+		$this->logger->info('[ESBlockService] Start bank import...');
 		if (is_array($blocks)) {
 			$addressBalanceTo = [];
 			$addressBalanceFrom = [];
@@ -138,8 +139,8 @@ class ESBlockService extends ESService
 
 					if ($transaction['coinbase'] && $transaction['from'] === BlockchainConfig::NAME) {
 						if ($block['height'] !== 1 && $this->walletBank[BlockchainConfig::NAME]['hash'] !== '' && $this->walletBank[BlockchainConfig::NAME]['hash'] !== $transaction['bankHash']) {
-							var_dump('Bank Hash ERROR <---------------------------------------------> '. $block['height']);
-							var_dump('------------------  ' . $this->walletBank[BlockchainConfig::NAME]['hash'] .' <=> ' . $transaction['bankHash'] . ' ------------------');
+							$this->logger->info('[ESBlockService] Bank Hash ERROR <---------------------------------------------> '. $block['height']);
+							$this->logger->info('[ESBlockService] ------------------  ' . $this->walletBank[BlockchainConfig::NAME]['hash'] .' <=> ' . $transaction['bankHash'] . ' ------------------');
 							break 2;
 							// exit();
 						}
@@ -158,7 +159,7 @@ class ESBlockService extends ESService
 				}
 
 				if (empty($minerTransaction)) {
-					var_dump('!! FATAL ERROR !! - No miner transaction -', $transaction);
+					$this->logger->error('[ESBlockService] !! FATAL ERROR !! - No miner transaction -' . $transaction);
 					exit();
 				}
 
@@ -193,7 +194,7 @@ class ESBlockService extends ESService
 				foreach ($transactions as $transaction) {
 		            $addressFrom = $transaction['from'];
 		            if (!isset($this->walletBank[$addressFrom]) || $this->walletBank[$addressFrom]['amount'] <= 0 && BlockchainConfig::NAME !== $addressFrom) {
-	            		var_dump('Invalid amount <---------------------------------------------> amount:' . $this->walletBank[$addressFrom]['amount'] . ' | '. $block['height'] . ' |  ' . $transaction['hash'] . ' | ' . $addressFrom);
+	            		$this->logger->error('[ESBlockService] Invalid amount <---------------------------------------------> amount:' . $this->walletBank[$addressFrom]['amount'] . ' | '. $block['height'] . ' |  ' . $transaction['hash'] . ' | ' . $addressFrom);
 		            	continue;
 		            }
 
@@ -236,7 +237,7 @@ class ESBlockService extends ESService
 		            	}
 
 		            	if (empty($transfers)) {
-		            		var_dump('Empty transfer <---------------------------------------------> '. $block['height'] . ' ' . $transaction['hash']);
+		            		$this->logger->error('[ESBlockService] Empty transfer <---------------------------------------------> '. $block['height'] . ' ' . $transaction['hash']);
 							break 2;
 		            	}
 
@@ -324,7 +325,7 @@ class ESBlockService extends ESService
 			            	}
 		            	}
 		            } else {
-						var_dump("[ESBlockService] [bulkBlocks] Invalid amount spent: address => " . $addressFrom . " | amount => " . $transaction['amount'] . " | Height => " . $block['height']);
+						$this->logger->info("[ESBlockService] [bulkBlocks] Invalid amount spent: address => " . $addressFrom . " | amount => " . $transaction['amount'] . " | Height => " . $block['height']);
 		            }
 		        }
 
@@ -361,7 +362,7 @@ class ESBlockService extends ESService
 				}
 
 				if ($amount) {
-					var_dump('[ESBlockService] [bulkBlocks] ++Increment amount | Address: ' . $address . ' | Amount: +' . $amount . ' | Height: ' . $height . ' | Hash: ' . $hash);
+					$this->logger->info('[ESBlockService] [bulkBlocks] ++Increment amount | Address: ' . $address . ' | Amount: +' . $amount . ' | Height: ' . $height . ' | Hash: ' . $hash);
 					$this->bankService->incrementAmount($address, $amount, $height, $hash);
 				}
 			}
@@ -377,7 +378,7 @@ class ESBlockService extends ESService
 				}
 
 				if ($amount) {
-					var_dump('[ESBlockService] [bulkBlocks] --Decrement amount | Address: ' . $address . ' | Amount: -' . $amount . ' | Height: ' . $height . ' | Hash: ' . $hash);
+					$this->logger->info('[ESBlockService] [bulkBlocks] --Decrement amount | Address: ' . $address . ' | Amount: -' . $amount . ' | Height: ' . $height . ' | Hash: ' . $hash);
 					$this->bankService->decrementAmount($address, $amount, $height, $hash);
 				}
 			}
@@ -390,7 +391,8 @@ class ESBlockService extends ESService
 	}
 
 	public function getByHeight($id, $asArray = false) {
-		$this->logger->info("[ESBlockService][getByHeight] Id: $id");
+		//$this->logger->info("[ESBlockService][getByHeight] Id: $id");
+
 		$response = $this->get($id);
 
 		if (isset($response['_source'])) {
@@ -402,7 +404,7 @@ class ESBlockService extends ESService
 	}
 
 	public function getByHash($hash, $asArray = false) {
-		$this->logger->info("[ESBlockService][getByHash] Hash: $hash");
+		// $this->logger->info("[ESBlockService][getByHash] Hash: $hash");
 
 		$result = $this->search([
 			'hash' => $hash
@@ -417,7 +419,8 @@ class ESBlockService extends ESService
 	}
 
 	public function getChain($fromHeight, $toHeight, $formatted = true, $original = false) {
-		$this->logger->info("[ESBlockService][getChain] fromHeight: $fromHeight | toHeight: $toHeight");
+		// $this->logger->info("[ESBlockService][getChain] fromHeight: $fromHeight | toHeight: $toHeight");
+
 		try {
 			$result = $this->client->search([
 			    'index' => $this->index,
@@ -439,7 +442,7 @@ class ESBlockService extends ESService
 			    ]
 			]);
 		} catch(\Exception $e) {
-			var_dump($e->getMessage());
+			$this->logger->error("[ESBlockService] Error: " . $e->getMessage());
 		}
 
 		if (!isset($result)) {
@@ -460,7 +463,7 @@ class ESBlockService extends ESService
 	}
 
 	public function getCompressed($fromHeight, $toHeight) {
-		$this->logger->info("[ESBlockService][getChain] fromHeight: $fromHeight | toHeight: $toHeight");
+		// $this->logger->info("[ESBlockService][getChain] fromHeight: $fromHeight | toHeight: $toHeight");
 
 		try {
 			$result = $this->client->search([
@@ -483,7 +486,7 @@ class ESBlockService extends ESService
 			    ]
 			]);
 		} catch(\Exception $e) {
-			var_dump($e->getMessage());
+			$this->logger->error("[ESBlockService] Error: " . $e->getMessage());
 		}
 
 		if (!isset($result)) {
@@ -500,7 +503,7 @@ class ESBlockService extends ESService
 	}
 
 	public function getTopHeight() {
-		$this->logger->info('[ESBlockService][getTopHeight] Index: ' . $this->index . '  | Type: ' . $this->type);
+		// $this->logger->info('[ESBlockService][getTopHeight] Index: ' . $this->index . '  | Type: ' . $this->type);
 
 		$height = 1;
 		try {
@@ -527,14 +530,14 @@ class ESBlockService extends ESService
 				$height = $result['hits']['hits'][0]['_id'];
 			}
 		} catch(\Exception $e) {
-			var_dump($e->getMessage());
+			$this->logger->error("[ESBlockService] Error: " . $e->getMessage());
 		}
 
 		return (int) $height;
 	}
 
 	public function getTopCumulativeDifficulty() {
-		$this->logger->info('[ESBlockService][getTopCumulativeDifficulty] Index: ' . $this->index . '  | Type: ' . $this->type);
+		// $this->logger->info('[ESBlockService][getTopCumulativeDifficulty] Index: ' . $this->index . '  | Type: ' . $this->type);
 
 		$cumulativeDifficulty = 1;
 		try {
@@ -561,7 +564,7 @@ class ESBlockService extends ESService
 				$cumulativeDifficulty = $result['hits']['hits'][0]['sort'][0];
 			}
 		} catch(\Exception $e) {
-			var_dump($e->getMessage());
+			$this->logger->error("[ESBlockService] Error: " . $e->getMessage());
 		}
 
 		return (int) $cumulativeDifficulty;
@@ -569,7 +572,7 @@ class ESBlockService extends ESService
 
 	public function getLastBlock($size = 1, $asArray = false, $page = 1, $original = false)
 	{
-		$this->logger->info('[ESBlockService][getLastBlock] Index: ' . $this->index . '  | Type: ' . $this->type);
+		// $this->logger->info('[ESBlockService][getLastBlock] Index: ' . $this->index . '  | Type: ' . $this->type);
 
 		$from = 0;
 		if ($page > 1) {
@@ -594,7 +597,7 @@ class ESBlockService extends ESService
 			    ]
 			]);
 		} catch(\Exception $e) {
-			var_dump($e->getMessage());
+			$this->logger->error('[ESBlockService] ' . $e->getMessage());
 		}
 
 		if (!isset($result['hits']['hits'][0])) {
@@ -624,7 +627,7 @@ class ESBlockService extends ESService
 
 	public function getLastBlocks($size = 1, $asArray = false, $page = 1, $original = false)
 	{
-		$this->logger->info('[ESBlockService][getLastBlocks] Index: ' . $this->index . '  | Type: ' . $this->type);
+		// $this->logger->info('[ESBlockService][getLastBlocks] Index: ' . $this->index . '  | Type: ' . $this->type);
 
 		$from = 0;
 		if ($page > 1) {
@@ -649,7 +652,7 @@ class ESBlockService extends ESService
 			    ]
 			]);
 		} catch(\Exception $e) {
-			var_dump($e->getMessage());
+			$this->logger->error("[ESBlockService] Error: " . $e->getMessage());
 		}
 
 		$output = [
