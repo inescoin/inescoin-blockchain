@@ -1,6 +1,6 @@
 <?php
 
-// Copyright 2019 The Inescoin developers.
+// Copyright 2019-2021 The Inescoin developers.
 // - Mounir R'Quiba
 // Licensed under the GNU Affero General Public License, version 3.
 
@@ -69,19 +69,19 @@ class ESBankService extends ESService
 		try {
 			$res = $this->client->update($params);
 		} catch (\Exception $e) {
-			$this->logger->info('[ESBankService] [updateAmount] ERROR --> ' . $e->getMessage());
+			$this->logger->error('[ESBankService] [updateAmount] ERROR --> ' . $e->getMessage());
 		}
 	}
 
 	public function incrementAmount($id, $amount, $height, $hash = '')
 	{
-		$this->logger->info('[ESBankService] [incrementAmount] ERROR --> id: ' .  $id . ' | amount: ' . $amount . ' | height: ' . $height . ' | hash: ' . $hash);
+		$this->logger->info('[ESBankService] [incrementAmount] id: ' .  $id . ' | amount: ' . $amount . ' | height: ' . $height . ' | hash: ' . $hash);
 		$this->updateAmount($id, $amount, $height, true, $hash);
 	}
 
 	public function decrementAmount($id, $amount, $height, $hash = '')
 	{
-		$this->logger->info('[ESBankService] [decrementAmount] ERROR --> id: ' .  $id . ' | amount: ' . $amount . ' | height: ' . $height . ' | hash: ' . $hash);
+		$this->logger->info('[ESBankService] [decrementAmount] id: ' .  $id . ' | amount: ' . $amount . ' | height: ' . $height . ' | hash: ' . $hash);
 		$this->updateAmount($id, $amount, $height, false, $hash);
 	}
 

@@ -1,6 +1,6 @@
 <?php
 
-// Copyright 2019 The Inescoin developers.
+// Copyright 2019-2021 The Inescoin developers.
 // - Mounir R'Quiba
 // Licensed under the GNU Affero General Public License, version 3.
 
@@ -87,13 +87,15 @@ final class Miner
             return $output;
         }
 
+        $height++;
+
         $output = [
             'id' => $data['walletAddress'],
             'data' => $dataEncoded,
             'nonce' => $nonce,
             'configHash' => $this->getBlockchain()->getConfigHash(),
             'difficulty' => $difficulty,
-            'height' => $height + 1,
+            'height' => $height,
             'createdAt' => (new DateTimeImmutable())->getTimestamp(),
             'previousHash' => $previousHash,
             'countTransaction' => $countTransaction,
@@ -102,6 +104,8 @@ final class Miner
             'previousCumulativeDifficulty' => $previousCumulativeDifficulty,
             'merkleRoot' => MerkleTree::getRoot($dataPool)
         ];
+
+        $this->logger->info("[Miner] getBlockTemplate for " . $data['walletAddress'] . ' at height ' . $height . ' with difficulty ' . $difficulty);
 
         $this->pool[$data['walletAddress']] = $output;
 
