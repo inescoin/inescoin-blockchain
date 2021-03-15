@@ -286,6 +286,7 @@ class ESBlockService extends ESService
 				            $transfersList[$transfer['hash']] = $transfer;
 				            $transfersList[$transfer['hash']]['transactionHash'] = $transaction['hash'];
 				            $transfersList[$transfer['hash']]['from'] = $transaction['from'];
+				            $transfersList[$transfer['hash']]['fee'] = $transaction['fee'];
 				            $transfersList[$transfer['hash']]['height'] = $block['height'];
 				            $transfersList[$transfer['hash']]['createdAt'] = $transaction['createdAt'];
 
@@ -362,7 +363,7 @@ class ESBlockService extends ESService
 				}
 
 				if ($amount) {
-					$this->logger->info('[ESBlockService] [bulkBlocks] ++Increment amount | Address: ' . $address . ' | Amount: +' . $amount . ' | Height: ' . $height . ' | Hash: ' . $hash);
+					// $this->logger->info('[ESBlockService] [bulkBlocks] ++Increment amount | Address: ' . $address . ' | Amount: +' . $amount . ' | Height: ' . $height . ' | Hash: ' . $hash);
 					$this->bankService->incrementAmount($address, $amount, $height, $hash);
 				}
 			}
@@ -378,7 +379,7 @@ class ESBlockService extends ESService
 				}
 
 				if ($amount) {
-					$this->logger->info('[ESBlockService] [bulkBlocks] --Decrement amount | Address: ' . $address . ' | Amount: -' . $amount . ' | Height: ' . $height . ' | Hash: ' . $hash);
+					// $this->logger->info('[ESBlockService] [bulkBlocks] --Decrement amount | Address: ' . $address . ' | Amount: -' . $amount . ' | Height: ' . $height . ' | Hash: ' . $hash);
 					$this->bankService->decrementAmount($address, $amount, $height, $hash);
 				}
 			}
@@ -415,7 +416,20 @@ class ESBlockService extends ESService
 		}
 
 		$block = $this->_toBlock($result['hits']['hits'][0]['_source']);
-		return $asArray ? $block->getJsonInfos() : $block;
+
+		$_block = $block->getJsonInfos();
+		$height = $_block['height'];
+		if ($asArray) {
+			if ($height > 1) {
+				$_block['previousBlock'] = $this->getByHeight($height - 1, $asArray);
+			}
+			$nextBlock = $this->getByHeight($height + 1, $asArray);
+			if (!empty($nextBlock)) {
+				$_block['nextBlock'] = $nextBlock;
+			}
+		}
+
+		return $asArray ? $_block : $block;
 	}
 
 	public function getChain($fromHeight, $toHeight, $formatted = true, $original = false) {

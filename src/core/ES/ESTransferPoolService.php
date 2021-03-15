@@ -135,6 +135,9 @@ class ESTransferPoolService extends ESService
 			        'amount' => [
 			          'type' => 'long',
 			        ],
+			        'fee' => [
+			          'type' => 'long',
+			        ],
 			        'to' => [
 			          'type' => 'text'
 			        ],

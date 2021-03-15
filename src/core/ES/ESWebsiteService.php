@@ -29,7 +29,7 @@ class ESWebsiteService extends ESService
 	{
 		$response = $this->get($url);
 
-		if (isset($response['error'])) {
+		if (isset($response['error']) || !array_key_exists('_source', $response)) {
             return [];
         }
 

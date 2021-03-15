@@ -13,14 +13,20 @@ use Inescoin\BlockchainConfig;
 
 $params = getopt('', [
 	'prefix::',
+	'logger-filename::',
+	'rpc-bind-ip::',
+	'rpc-bind-port::',
 	'help::',
 ]);
 
 $prefix = $params['prefix'] ?? BlockchainConfig::NAME;
+$logFileName = $params['logger-filename'] ?? BlockchainConfig::NAME;
 $helpMe = array_key_exists('help', $params);
+$rpcBindIp = $params['rpc-bind-ip'] ?? '0.0.0.0' ;
+$rpcBindPort = $params['rpc-bind-port'] ?? 8087;
 
 if ($helpMe) {
 	die($help['sync']);
 }
 
-(new BlockchainSync($prefix))->run();
+(new BlockchainSync($prefix, BlockchainConfig::NAME, $logFileName, $rpcBindIp, $rpcBindPort))->run();

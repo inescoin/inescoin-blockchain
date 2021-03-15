@@ -126,7 +126,7 @@ class ESService
 			$response =  $this->client->index($params);
 		} catch (\Exception $e) {
 			$response['error'] = $e->getMessage();
-			var_dump('ERROR --> ' . self::class . ' | ' . $response['error']);
+			$this->logger->error('[ESService] ERROR --> _index ' . self::class . ' | ' . $response['error']);
 		}
 
 		return $response;
@@ -134,6 +134,10 @@ class ESService
 
 	protected function _update($index, $type, $id, $body = [], $refresh = false) {
 		// $this->logger->info("[ESService][_update] Index: $index  | Type: $type | Id: $id  | Refresh: " . (int) $refresh . " | Body: " . serialize($body));
+
+		if (!$this->_exists($index, $type, $id)) {
+			return;
+		}
 
 		$response = [];
 		try {
@@ -151,7 +155,7 @@ class ESService
 			$response =  $this->client->update($params);
 		} catch (\Exception $e) {
 			$response['error'] = $e->getMessage();
-			var_dump('ERROR --> ' . self::class . ' | ' . $response['error']);
+			$this->logger->error('[ESService] ERROR --> _update ' . self::class . ' | ' . $response['error']);
 		}
 
 		return $response;
@@ -161,7 +165,7 @@ class ESService
 	{
 		// $this->logger->info("[ESService][_exists] Index: $index  | Type: $type | Id: $id ");
 
-		$response = [];
+		$response = false;
 		try {
 			$params = [
 			    'index' => $index,
@@ -172,7 +176,8 @@ class ESService
 			$response =  $this->client->exists($params);
 		} catch (\Exception $e) {
 			$response['error'] = $e->getMessage();
-			var_dump('ERROR --> ' . self::class . ' | ' . $response['error']);
+			$response = false;
+			$this->logger->error('[ESService] ERROR --> _exists ' . self::class . ' | ' . $response['error']);
 		}
 
 		return $response;
@@ -200,13 +205,17 @@ class ESService
 			try {
 				$this->client->bulk($params);
 			} catch (\Exception $e) {
-				var_dump('ERROR --> ' . self::class . ' | ' . $e->getMessage());
+				$this->logger->error('[ESService] ERROR --> _bulkIndex ' . self::class . ' | ' . $e->getMessage());
 			}
 		}
 	}
 
 	protected function _get($index, $type, $id) {
 		// $this->logger->info("[ESService][_get] Index: $index  | Type: $type | Id: $id");
+
+		if (!$this->_exists($index, $type, $id)) {
+			return [];
+		}
 
 		$response = [];
 
@@ -218,7 +227,7 @@ class ESService
 			]);
 		} catch (\Exception $e) {
 			$response['error'] = $e->getMessage();
-			var_dump('ERROR --> ' . self::class . ' | ' . $response['error']);
+			$this->logger->error('[ESService] ERROR --> _get ' . self::class . ' | ' . $response['error']);
 		}
 
 		return $response;
@@ -277,7 +286,7 @@ class ESService
 			    ]);
 		} catch (\Exception $e) {
 			$response['error'] = $e->getMessage();
-			var_dump('ERROR --> ' . self::class . ' | ' . $response['error']);
+			$this->logger->error('[ESService] ERROR --> _deleteByQuery ' . self::class . ' | ' . $response['error']);
 		}
 		return $response;
 	}
@@ -299,7 +308,8 @@ class ESService
 			]);
  		} catch (\Exception $e) {
 			$response['error'] = $e->getMessage();
-			$this->logger->error('[ESService] ERROR --> ' . $response['error']);
+			// $this->logger->error('[ESService] ERROR --> ' . $response['error']);
+			$this->logger->error('[ESService] ERROR --> _search ' . self::class . ' | ' . $response['error']);
 		}
 		return $response;
 	}
@@ -324,6 +334,7 @@ class ESService
  		} catch (\Exception $e) {
  			$response['error'] = $e->getMessage();
 			$this->logger->error('[ESService] ERROR --> ' . $response['error']);
+			$this->logger->error('[ESService] ERROR --> _all ' . self::class . ' | ' . $response['error']);
 		}
 
 		return $response;

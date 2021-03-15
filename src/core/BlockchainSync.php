@@ -13,6 +13,8 @@ use Inescoin\Block;
 use Inescoin\RPC\RpcClient;
 use DateTimeImmutable;
 
+use Inescoin\LoggerService;
+
 class BlockchainSync
 {
 
@@ -28,26 +30,39 @@ class BlockchainSync
 	protected $lastCleanBlacklistAt = 0;
 	protected $cleanBlacklistInterval = 90;
 
+	// protected $peersConfig = [
+	// 	'ssl' => true,
+	// 	'rpcHost' => 'node.inescoin.org',
+	// 	'rpcPort' => 80
+	// ];
+
 	protected $peersConfig = [
-		'ssl' => true,
-		'rpcHost' => 'node.inescoin.org',
-		'rpcPort' => 80
+		'rpcHost' => '0.0.0.0',
+		'rpcPort' => 8087
 	];
 
-	// protected $peersConfig = [
-	// 	'rpcHost' => '0.0.0.0',
-	// 	'rpcPort' => 8087
-	// ];
+	public $logger;
 
 	protected $alreadyChecked = [];
 	protected $blacklist = [];
 
-	public function __construct($prefix = 'inescoin') {
+	public function __construct(
+		$prefix = BlockchainConfig::NAME,
+		$name = BlockchainConfig::NAME,
+		$loggerName = BlockchainConfig::NAME,
+		$rpcBindIp,
+		$rpcBindPort
+	) {
+		$this->logger = (LoggerService::getInstance($loggerName))->getLogger();
+
 		$this->rpcClient = new RpcClient();
 		$this->blockchain = new Blockchain('./', $prefix, true, true);
 
 		$this->lastMessageCreatedAt = (new \DateTimeImmutable())->getTimestamp();
 		$this->lastCleanBlacklistAt = (new \DateTimeImmutable())->getTimestamp();
+
+		$this->peersConfig['rpcHost'] = $rpcBindIp;
+		$this->peersConfig['rpcPort'] = $rpcBindPort;
 	}
 
 	public function run() {
@@ -65,6 +80,8 @@ class BlockchainSync
 				if ($nowTimestamp > $this->cleanBlacklistInterval + $this->lastCleanBlacklistAt) {
 					$this->blacklist = [];
 					$this->lastCleanBlacklistAt = (new \DateTimeImmutable())->getTimestamp();
+
+					$this->logger->info('[BlockchainSync] ' . count($this->blacklist) . ', Timer: ' . $this->lastCleanBlacklistAt . 'sec');
 				}
 
 				$ssl = isset($peer['ssl']);
@@ -73,7 +90,8 @@ class BlockchainSync
 				if (!(in_array($remote, $this->alreadyChecked) || in_array($remote, $this->blacklist))) {
 					$currentBlockHeight = $this->blockchain->getTopHeight();
 
-					var_dump('|-----> Connect to ' . $remote . '...');
+					$this->logger->info('[BlockchainSync] ' . 'Connecting to ' . $remote);
+
 					$status = $this->rpcClient->request($peer['rpcHost'], 'GET', 'status', [], $peer['rpcPort'], $ssl);
 					$remotePeers = $this->rpcClient->request($peer['rpcHost'], 'GET', 'peers', [], $peer['rpcPort'], $ssl);
 					$messages = $this->rpcClient->request($peer['rpcHost'], 'POST', 'last-messages', [
@@ -83,26 +101,28 @@ class BlockchainSync
 					if (isset($messages['count']) && isset($messages['messages'])) {
 						foreach ($messages['messages'] as $message) {
 							if ($this->blockchain->pushMessage($message)) {
-								var_dump('[Success] message pushed');
+								// $this->logger->info('[BlockchainSync] ' . '[Success] message pushed');
 							} else {
-								var_dump('[Error] message pushed');
+								// $this->logger->info('[BlockchainSync] ' . '[Error] message pushed');
 							}
 						}
+
+						$this->logger->info('[BlockchainSync] ' . $messages['count'] . ' new message(s) : Timestamp => ' . $lastMessageCreatedAt);
 					}
-					var_dump($messages['count'] . ' new message(s) : Timestamp => ', $lastMessageCreatedAt);
+
 					foreach ($remotePeers as $index => $peer) {
 		                $this->blockchain->es->peerService()->index($index, $peer);
 					}
 
 					if (!is_array($status) || !isset($status['height'])) {
-						var_dump('<------| Aborted connexion with ' . $remote . '...', $status);
+						$this->logger->info('[BlockchainSync] ' . ' |xxx| Aborted connexion from ' . $remote);
 						$this->blacklist[] = $remote;
 						continue;
 					}
 
 					if (is_array($status) && isset($status['height']) && $currentBlockHeight < $status['height']) {
 						$page = ceil($status['height'] / $this->transferLimit);
-						var_dump($remote . ' | height => ' . $status['height'], $page);
+						$this->logger->info('[BlockchainSync] ' . $remote . ' | height => ' . $status['height']);
 
 						$currentPos = !$currentBlockHeight ?  1 : $page - ceil($currentBlockHeight / $this->transferLimit);
 
@@ -116,7 +136,7 @@ class BlockchainSync
 							$peer['rpcPort'], $ssl);
 
 							if (isset($blocks['error'])) {
-								var_dump($blocks['error']);
+								$this->logger->info('[BlockchainSync] ' . $blocks['error']);
 								break;
 							}
 
@@ -130,7 +150,7 @@ class BlockchainSync
 									$currentBlockHeight = $this->blockchain->getTopHeight();
 									$currentPos++;
 								} else {
-									var_dump('| x ERROR x | > bulkAdd <');
+									$this->logger->info('[BlockchainSync] ' . '| x ERROR x | > bulkAdd <');
 									$this->blacklist[] = $remote;
 								}
 							}
@@ -140,12 +160,12 @@ class BlockchainSync
 						}
 					} else {
 						if ((int) $currentBlockHeight === (int) $status['height']) {
-							var_dump($remote . ' |  Synchro OK | ' . $status['height']);
+							$this->logger->info('[BlockchainSync] ' . $remote . ' |  Synchro OK | ' . $status['height']);
 						} else if ((int) $currentBlockHeight > (int) $status['height']) {
-							var_dump($remote . ' | x ==> Synchro NOT OK <== x ! | ' . $status['height']);
+							$this->logger->info('[BlockchainSync] ' . $remote . ' | x ==> Synchro NOT OK <== x ! | ' . $status['height']);
 							$this->blacklist[] = $remote;
 						} else {
-							var_dump($remote . ' | x ERROR x | ');
+							$this->logger->info('[BlockchainSync] ' . $remote . ' | x ERROR x | ');
 						}
 					}
 
@@ -153,7 +173,7 @@ class BlockchainSync
 				}
 			}
 
-			var_dump('Waiting for next block [' . $this->iteration++ . '] => Top Block => ' . $this->blockchain->getTopHeight());
+			$this->logger->info('[BlockchainSync] ' . '[' . $this->iteration++ . '] Waiting for next block: ' . $this->blockchain->getTopHeight());
 			sleep(10);
 		}
 	}

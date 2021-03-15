@@ -154,7 +154,6 @@ final class RpcServer
 
                         $response = $this->node->getLastMessagesPool($timestamp);
 
-                        var_dump('$timestamp: ' . $timestamp);
                         $this->cache->setCache($key, $response);
                         return new JsonResponse($response);
 
@@ -323,7 +322,7 @@ final class RpcServer
                     case 'get-wallet-addresses-domain':
                         $page = isset($data['page']) ? (int) $data['page'] : 1;
                         $walletAddresses = isset($data['walletAddresses']) ? $data['walletAddresses'] : null;
-                        if (null === $walletAddresses) {
+                        if (null === $walletAddresses || is_array($walletAddresses)) {
                             return new JsonResponse([]);
                         }
 
@@ -350,7 +349,7 @@ final class RpcServer
                         }
 
                         $addresses = explode(',', $walletAddresses);
-                        if (count($addresses) > 20) {
+                        if (count($addresses) > 100) {
                             return new JsonResponse([]);
                         }
 

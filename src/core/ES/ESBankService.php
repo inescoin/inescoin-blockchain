@@ -75,13 +75,15 @@ class ESBankService extends ESService
 
 	public function incrementAmount($id, $amount, $height, $hash = '')
 	{
-		$this->logger->info('[ESBankService] [incrementAmount] id: ' .  $id . ' | amount: ' . $amount . ' | height: ' . $height . ' | hash: ' . $hash);
+		// $this->logger->info('[ESBankService] [incrementAmount] id: ' .  $id . ' | amount: ' . $amount . ' | height: ' . $height . ' | hash: ' . $hash);
+		$this->logger->info('[ESBankService] ' .  $id . ': +' . $amount . ' Inescoin');
 		$this->updateAmount($id, $amount, $height, true, $hash);
 	}
 
 	public function decrementAmount($id, $amount, $height, $hash = '')
 	{
-		$this->logger->info('[ESBankService] [decrementAmount] id: ' .  $id . ' | amount: ' . $amount . ' | height: ' . $height . ' | hash: ' . $hash);
+		// $this->logger->info('[ESBankService] [decrementAmount] id: ' .  $id . ' | amount: ' . $amount . ' | height: ' . $height . ' | hash: ' . $hash);
+		$this->logger->info('[ESBankService] ' .  $id . ': -' . $amount . ' Inescoin');
 		$this->updateAmount($id, $amount, $height, false, $hash);
 	}
 

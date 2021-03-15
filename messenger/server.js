@@ -18,6 +18,13 @@ let log = function(severity, system, text, data){
     global.log(severity, system, threadId + text, data);
 };
 
+let isTest = false;
+let port = 8087;
+let hostName = isTest ? 'localhost:' + port : 'node.inescoin.org';
+let pathURI = '/messages/?addresses=';
+
+let apiURL = (isTest ? 'http://' : 'https://') + hostName + pathURI;
+
 log('info', logSystem, 'Server started');
 
 io.sockets.on('connection', function (socket) {
@@ -41,17 +48,19 @@ io.sockets.on('connection', function (socket) {
 					return;
 				}
 
-				https.get('https://node.inescoin.org/messages/?addresses=' + response.address, (resp) => {
+				(isTest ? http : https).get(apiURL + response.address, (resp) => {
 					if (!cache[socket.user]) {
 						cache[socket.user] = [];
 					}
 
 					log('info', logSystem, 'Send data: ' + socket.user);
+					console.log(apiURL + response.address);
 
 					let data = '';
 
 					resp.on('data', (chunk) => {
 						data += chunk;
+						log('info', logSystem, 'data: ' + chunk);
 					});
 
 					resp.on('end', () => {
@@ -63,8 +72,13 @@ io.sockets.on('connection', function (socket) {
 							}
 
 							let final = JSON.parse(data);
-							if (!final || !final.messages) {
+							if (!final) {
 								log('error', logSystem, 'ERROR: Bad final message');
+								return;
+							}
+
+							if (!final.messages) {
+								log('info', logSystem, 'No message found');
 								return;
 							}
 

@@ -71,13 +71,13 @@ $help['miner'] = "
 
 Usage:
   bin/" . BlockchainConfig::NAME . "-miner --help
-  bin/" . BlockchainConfig::NAME . "-miner --rpc-ip=0.0.0.0 --rpc-port=8086 --wallet-address=XXXXXXXXXXXXXXXXXXXXXXXXX
+  bin/" . BlockchainConfig::NAME . "-miner --rpc-ip=0.0.0.0 --rpc-port=8087 --wallet-address=XXXXXXXXXXXXXXXXXXXXXXXXX
 
 Options:
   --help                              Show help console
 
   --rpc-ip=<rpc-ip>                   Remote node RPC ip (127.0.0.0)
-  --rpc-port=<rpc-port>               Remote node RPC port (8086)
+  --rpc-port=<rpc-port>               Remote node RPC port (8087)
 
   --wallet-address=<wallet-address>   Miner wallet address
 	". PHP_EOL;
@@ -101,11 +101,26 @@ Options:
   --data-folder=<folder>         Working directory (./)
 
   --rpc-bind-ip=<rpc-ip>         RPC ip (127.0.0.0)
-  --rpc-bind-port=<rpc-port>     RPC port (8086)
+  --rpc-bind-port=<rpc-port>     RPC port (8087)
 
   --p2p-bind-ip=<p2p-ip>         P2P ip (127.0.0.0)
   --p2p-bind-port=<p2p-port>     P2P port (3030)
-	". PHP_EOL;
+  ". PHP_EOL;
+
+$help['sync'] = "
+" . ucfirst(BlockchainConfig::NAME) . " [" . strtoupper(BlockchainConfig::SYMBOL). "] v". BlockchainConfig::VERSION ."
+
+Usage:
+  bin/" . BlockchainConfig::NAME . "-sync --help
+  bin/" . BlockchainConfig::NAME . "-sync --rpc-bind-ip=0.0.0.0 --rpc-bind-port=8087
+Options:
+  --help                              Show help console
+  --prefix=<prefix>                   Blockchain prefix (" . BlockchainConfig::NAME . ")
+  --logger-filename=<filename.log>    Default (" . BlockchainConfig::NAME . ".log)
+
+  --rpc-bind-ip=<rpc-ip>              RPC ip (127.0.0.0)
+  --rpc-bind-port=<rpc-port>          RPC port (8087)
+  ". PHP_EOL;
 
 $help['reset'] = "
 " . ucfirst(BlockchainConfig::NAME) . " [" . strtoupper(BlockchainConfig::SYMBOL). "] v". BlockchainConfig::VERSION ."

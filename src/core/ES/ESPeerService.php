@@ -35,7 +35,7 @@ class ESPeerService extends ESService
 	}
 
 	public function getRemoteAddresses() {
-		$this->logger->info("[ESPeerService][getRemoteAddresses] Index: {$this->index}  | Type: {$this->type}");
+		// $this->logger->info("[ESPeerService][getRemoteAddresses] Index: {$this->index}  | Type: {$this->type}");
 		// var_dump("[ESService][_all] Index: $index  | Type: $type");
 
 		try {
@@ -71,7 +71,7 @@ class ESPeerService extends ESService
 	}
 
 	public function getByTopCumulativeDifficulty() {
-		$this->logger->info("[ESPeerService][getByTopCumulativeDifficulty] Index: {$this->index}  | Type: {$this->type}");
+		// $this->logger->info("[ESPeerService][getByTopCumulativeDifficulty] Index: {$this->index}  | Type: {$this->type}");
 		// var_dump("[ESService][_all] Index: $index  | Type: $type");
 
 		try {

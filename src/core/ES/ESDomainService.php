@@ -67,7 +67,7 @@ class ESDomainService extends ESService
 	{
 		$response = $this->get($url);
 
-		if (isset($response['error'])) {
+		if (isset($response['error']) || !array_key_exists('_source', $response)) {
             return [];
         }
 
@@ -115,7 +115,7 @@ class ESDomainService extends ESService
 	}
 
 	public function getByHeight($height) {
-		$this->logger->info("[ESBlockService][getChain] height: $height");
+		// $this->logger->info("[ESBlockService][getChain] height: $height");
 		try {
 			$result = $this->client->search([
 			    'index' => $this->index,

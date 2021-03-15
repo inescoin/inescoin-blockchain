@@ -23,8 +23,11 @@ class LoggerService
 
 	public function __construct($name = BlockchainConfig::NAME)
 	{
+
+		$name = str_replace('.log', '', $name);
+
 		$this->logger = new Logger($name);
-        $this->logger->pushHandler(new StreamHandler('./' . $this->loggerFile . '.log', Logger::DEBUG));
+        $this->logger->pushHandler(new StreamHandler('./' . $name . '.log', Logger::DEBUG));
         $this->logger->pushHandler(new FirePHPHandler());
 	}
 
