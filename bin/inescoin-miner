@@ -1,0 +1,42 @@
+#!/usr/bin/env php
+<?php
+
+// Copyright 2019-2021 The Inescoin developers.
+// - Mounir R'Quiba
+// Licensed under the GNU Affero General Public License, version 3.
+
+require __DIR__.'/../vendor/autoload.php';
+require __DIR__ . '/../src/help.php';
+
+use Inescoin\BlockchainConfig;
+use Inescoin\EC\AddressValidator;
+use Inescoin\RPC\RpcServer;
+use Inescoin\Service\MinerPoolService;
+
+$params = getopt('', [
+	'rpc-ip::',
+	'rpc-port::',
+	'wallet-address::',
+	'help::',
+]);
+
+$rpcIp = $params['rpc-ip'] ?? '127.0.0.1' ;
+$rpcPort = $params['rpc-port'] ?? 8087;
+$walletAddress = $params['wallet-address'] ?? '';
+$helpMe = array_key_exists('help', $params);
+
+if ($helpMe) {
+	die($help['miner']);
+}
+
+if (empty($walletAddress)) {
+	throw new Exception("Option '--wallet-address=XXXXXXXXXXXXXXXXXXXXXXXXX not found", 1);
+}
+
+$valideAddress = AddressValidator::isValid($walletAddress);
+
+if (in_array($valideAddress, AddressValidator::INVALID)) {
+	throw new Exception("Invalid address format => " . $walletAddress, 1);
+}
+
+(new MinerPoolService($rpcIp, $rpcPort, $walletAddress))->start();

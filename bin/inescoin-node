@@ -1,0 +1,133 @@
+#!/usr/bin/env php
+<?php
+
+require __DIR__ . '/../vendor/autoload.php';
+
+
+use Inescoin\BlockchainConfig;
+use Inescoin\Helper\ZeroPrefix;
+use Inescoin\Node\Node;
+use Inescoin\Node\P2PServer;
+use Inescoin\RPC\RpcServer;
+use Inescoin\Service\BlockchainService;
+use Inescoin\Service\MinerService;
+
+use React\EventLoop\Factory;
+use React\Http\HttpServer;
+use React\Socket\Connector;
+use React\Socket\SecureServer;
+use React\Socket\Server as SocketServer;
+use React\Http\Middleware\StreamingRequestMiddleware;
+use React\Http\Middleware\LimitConcurrentRequestsMiddleware;
+use React\Http\Middleware\RequestBodyBufferMiddleware;
+use React\Http\Middleware\RequestBodyParserMiddleware;
+use Sikei\React\Http\Middleware\CorsMiddleware;
+
+$params = getopt('', [
+	'rpc-bind-ip::',
+	'rpc-bind-port::',
+	'p2p-bind-ip::',
+	'p2p-bind-port::',
+	'data-folder::',
+	'genesis::',
+	'reset::',
+	'scan::',
+	'ssl::',
+	'prefix::',
+	'network::',
+	'help::',
+]);
+
+
+$rpcBindIp = $params['rpc-bind-ip'] ?? '0.0.0.0' ;
+$rpcBindPort = $params['rpc-bind-port'] ?? 8087;
+$p2pBindIp = $params['p2p-bind-ip'] ?? '0.0.0.0';
+$p2pBindPort = $params['p2p-bind-port'] ?? 3030;
+$dataFolder = $params['data-folder'] ?? './';
+$prefix = $params['prefix'] ?? BlockchainConfig::NAME;
+$network = $params['network'] ?? 'MAINNET';
+$helpMe = array_key_exists('help', $params);
+$sslActived = array_key_exists('ssl', $params);
+$resetMode = array_key_exists('reset', $params);
+
+$shownGenesisHash = array_key_exists('genesis', $params);
+
+if ($helpMe) {
+	die($help['node']);
+}
+
+$peersConfig = [
+	[
+		'host' => '0.0.0.0',
+		'port' => 3031
+	],
+];
+
+$localPeerConfig = [
+	'host' => $p2pBindIp,
+	'port' => $p2pBindPort,
+	'rpcHost' => $rpcBindIp,
+	'rpcPort' => $rpcBindPort
+];
+
+$loop = Factory::create();
+
+$connector = new Connector($loop, [
+	'tcp' => [ 'bindto' => '192.168.0.1:0' ],
+	'tls' => [ 'verify_peer' => false, 'verify_peer_name' => false ],
+]);
+
+$inesCoin = BlockchainService::getInstance($prefix, $dataFolder, $resetMode, $shownGenesisHash);
+$minerService = new MinerService($inesCoin, new ZeroPrefix());
+
+$p2pServer =  new P2PServer($connector);
+
+$node = new Node(
+	$minerService,
+	$p2pServer
+);
+
+$p2pServer->attachNode($node);
+
+$socketP2pServer = new SocketServer("$p2pBindIp:$p2pBindPort" , $loop);
+$socketP2pServer->on('connection', $p2pServer);
+
+$settings = [
+    'allow_credentials' => true,
+    'allow_origin'      => ['*'],
+    'allow_methods'     => ['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'OPTIONS'],
+    'allow_headers'     => ['DNT','X-Custom-Header','Keep-Alive','User-Agent','X-Requested-With','If-Modified-Since','Cache-Control','Content-Type','Content-Range','Range'],
+    'expose_headers'    => ['DNT','X-Custom-Header','Keep-Alive','User-Agent','X-Requested-With','If-Modified-Since','Cache-Control','Content-Type','Content-Range','Range'],
+    'max_header_size' 	=> 1024 * 16,
+    'max_age'           => 60 * 60 * 24 * 20, // preflight request is valid for 20 days
+];
+
+$webServer = new RpcServer($node);
+// $httpserver = new HttpServer($webServer);
+$httpserver = new HttpServer(
+	new CorsMiddleware($settings),
+	new StreamingRequestMiddleware(),
+    new LimitConcurrentRequestsMiddleware(100), // 100 concurrent buffering handlers
+    new RequestBodyBufferMiddleware(20 * 1024 * 1024), // 2 MiB per request
+    new RequestBodyParserMiddleware(),
+	$webServer
+);
+
+$socketHttp = new SocketServer($rpcBindIp . ':' . $rpcBindPort, $loop);
+if ($sslActived) {
+	$socketHttp = new SecureServer($socketHttp, $loop, array(
+	    'local_cert' => __DIR__ . '/../' . PKI::generateCertificat(),
+	    'local_pk' => __DIR__ . '/../' . 'blockchain.key',
+	    'allow_self_signed' => true,
+	    'verify_peer' => false
+	));
+}
+
+$httpserver->listen($socketHttp);
+
+echo sprintf("Data folder: %s\n", $dataFolder);
+
+echo sprintf("[$network] Web server running at " . (($sslActived) ? 'https' : 'http' ). "://%s:%s\n", $rpcBindIp, $rpcBindPort);
+echo sprintf("[$network] P2p server running at " . (($sslActived) ? 'tls' : 'tcp' . "://%s:%s\n"), $p2pBindIp, $p2pBindPort);
+
+$loop->run();

@@ -6,109 +6,72 @@ services:
         hostname: inescoin-node
         restart: always
         build:
-          context: .
+            context: .
+            dockerfile: docker/php/Dockerfile
+            args:
+                TIMEZONE: Europe/Madrid
         volumes:
-            - ./:/opt
+            - ./:/opt/
         ports:
+            - "3031:3031"
+            - "3030:3030"
             - "8087:8087"
             - "8088:8088"
             - "8086:8086"
-            - "3030:3030"
-            - "3031:3031"
             - "8180:8180"
         stdin_open: true
         expose:
-          - "3031"
-          - "3030"
-          - "8087"
-          - "8088"
-          - "8086"
-          - "8180"
-        command: bash /opt/run.sh
+            - "3031"
+            - "3030"
+            - "8087"
+            - "8088"
+            - "8086"
+            - "8180"
         networks:
-          - overlay
-    inescoin_messenger:
-        container_name: inescoin-wallet
-        build: ../inescoin-wallet/
-        hostname: inescoin-wallet
-        restart: always
-        build:
-          context: ../inescoin-wallet/
-        volumes:
-            - ../inescoin-wallet/:/opt
-        ports:
-            - "4200:4200"
-        stdin_open: true
-        expose:
-          - "4200"
-          - "8180"
-        command: bash /opt/run.sh
-    inescoin_explorer_nginx:
-        build: ../inescoin-explorer/services/nginx
-        container_name: inescoin-explorer-nginx
-        restart: always
-        working_dir: /www
-        volumes:
-            - ../inescoin-explorer/:/www
-        ports:
-          - "8000:80"
-        networks:
-          - overlay
-    inescoin_explorer_phpfpm:
-        build: ../inescoin-explorer/services/phpfpm
-        container_name: inescoin-explorer-phpfpm
-        hostname: phpfpm
-        restart: always
-        working_dir: /www
-        volumes:
-            - ../inescoin-explorer/:/www
-        # command: bash /www/services/phpfpm/phpfpm.sh
-        networks:
-          - overlay
-    inescoin_website_nginx:
-        build: ../inescoin-website-viewer/services/nginx
-        container_name: inescoin-website-viewer-nginx
-        restart: always
-        working_dir: /www
-        volumes:
-            - ../inescoin-website-viewer/:/www
-        ports:
-          - "8001:80"
-        networks:
-          - overlay
-    inescoin_website_phpfpm:
-        build: ../inescoin-website-viewer/services/phpfpm
-        container_name: inescoin-website-viewer-phpfpm
-        hostname: phpfpm
-        restart: always
-        working_dir: /www
-        volumes:
-            - ../inescoin-website-viewer/:/www
-        # command: bash /www/services/phpfpm/phpfpm.sh
-        networks:
-          - overlay
-    elasticsearch:
-        container_name: elasticsearch
-        image: docker.elastic.co/elasticsearch/elasticsearch:7.0.1
-        volumes:
-          - esdata:/usr/share/elasticsearch/data
-        environment:
-          - bootstrap.memory_lock=true
-          - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-          - discovery.type=single-node
-        ports:
-          - "9308:9300"
-          - "9208:9200"
-        networks:
-          - overlay
-    kibana:
-      container_name: kibana
-      image: docker.elastic.co/kibana/kibana:7.0.1
-      ports:
-        - "5608:5601"
-      networks:
             - overlay
-volumes:
-  esdata:
+    inescoin_explorer_nginx:
+        build: ../inescoin-explorer/docker/nginx
+        container_name: inescoin-explorer-nginx
+        hostname: inescoin-explorer-nginx
+        restart: always
+        working_dir: /www
+        volumes:
+            - ../inescoin-explorer/:/www
+        ports:
+            - "8000:80"
+        networks:
+            - overlay
+    inescoin_explorer_phpfpm:
+        build: ../inescoin-explorer/docker/phpfpm
+        container_name: inescoin-explorer-phpfpm
+        hostname: inescoin-explorer-phpfpm
+        restart: always
+        working_dir: /www
+        volumes:
+            - ../inescoin-explorer/:/www
+        networks:
+            - overlay
+    inescoin_website_nginx:
+        build: ../inescoin-website-viewer/docker/nginx
+        container_name: inescoin-website-viewer-nginx
+        hostname: inescoin-website-viewer-nginx
+        restart: always
+        working_dir: /www
+        volumes:
+            - ../inescoin-website-viewer/:/www
+        ports:
+            - "8001:80"
+        networks:
+            - overlay
+    inescoin_website_phpfpm:
+        build: ../inescoin-website-viewer/docker/phpfpm
+        container_name: inescoin-website-viewer-phpfpm
+        hostname: inescoin-website-viewer-phpfpm
+        restart: always
+        working_dir: /www
+        volumes:
+            - ../inescoin-website-viewer/:/www
+        networks:
+            - overlay
 networks:
     overlay:
