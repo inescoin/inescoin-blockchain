@@ -15,9 +15,9 @@ class TransactionPoolManager extends AbstractManager
 		parent::__construct($database);
 	}
 
-	public function range(int $offset = 0, int $limit = 10, string $orderBy = 'height', string $sortBy = 'asc')
+	public function range(int $offset = 0, int $limit = 10, string $orderBy = 'height', string $sortBy = 'asc', string $where = '')
 	{
-		$transactionPoolsResult = parent::range($offset, $limit, $orderBy, $sortBy);
+		$transactionPoolsResult = parent::range($offset, $limit, $orderBy, $sortBy, $where);
 
 		$transactionPools = [];
 
@@ -30,9 +30,9 @@ class TransactionPoolManager extends AbstractManager
 		return $transactionPools;
 	}
 
-	public function rangeAsArray(int $offset = 0, int $limit = 10, string $orderBy = 'fee', string $sortBy = 'desc')
+	public function rangeAsArray(int $offset = 0, int $limit = 10, string $orderBy = 'fee', string $sortBy = 'desc', string $where = '')
 	{
-		$transactionPoolsResult = parent::range($offset, $limit, $orderBy, $sortBy);
+		$transactionPoolsResult = parent::range($offset, $limit, $orderBy, $sortBy, $where);
 
 		$transactionPools = [];
 

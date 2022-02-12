@@ -27,6 +27,10 @@ class BlockHelper
      */
     public static function extractBlock(array $blocks, ?string $database = null, bool $resetMode = false): int
     {
+        if (empty($blocks)) {
+            return 0;
+        }
+
         $blocksToSave = [];
 
         $blockchainManager = new BlockchainManager($database);
@@ -56,7 +60,7 @@ class BlockHelper
         }
 
         $lastBlock = $blockchainManager->getBlock()->last();
-        $lastBlockHeight = 1;
+        $lastBlockHeight = $blocks[0]->getHeight();
 
         $previousBlock = !$resetMode
             ? $lastBlock
@@ -373,6 +377,7 @@ class BlockHelper
 
                                 if (!$hasDomain) {
                                     $hasDomain = true;
+                                    $block->setHasDomain($hasDomain);
                                 }
                             }
                         }
@@ -382,7 +387,6 @@ class BlockHelper
                 }
             }
 
-            $block->setHasDomain($hasDomain);
             $blocksToSave[] = $block;
         }
 
@@ -471,15 +475,13 @@ class BlockHelper
             $blockchainManager->getBlock()->bulkSave($blocksToSave);
         }
 
-        if ($lastBlockHeight >= 1) {
-            $range = 100;
+        $range = 100;
 
-            var_dump("LastBlockHeight => $lastBlockHeight *------- ");
-            while(!empty($blocks = $blockchainManager->getBlock()->range($lastBlockHeight - 1, $range))) {
-                var_dump(' ------* ' . count($blocks) . " | $lastBlockHeight *------- ");
+        var_dump("LastBlockHeight => $lastBlockHeight *------- ");
+        while(!empty($blocks = $blockchainManager->getBlock()->range($lastBlockHeight - 1, $range, 'height', 'asc', ' WHERE hasDomain = 1 '))) {
+            var_dump(' ------* ' . count($blocks) . " | $lastBlockHeight *------- ");
 
-                $lastBlockHeight += $range;
-            }
+            $lastBlockHeight += $range;
         }
 
         return count($blocksToSave);

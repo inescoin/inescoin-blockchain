@@ -156,7 +156,7 @@ class BackupService
 
 		$pharData->compress(\Phar::GZ);
 		@unlink($this->dzfile);
-		//@rmdir($this->folder);
+		@rmdir($this->folder);
 
 
 		$endTime = microtime(true);
@@ -235,7 +235,7 @@ class BackupService
 			if (file_exists($path)) {
 				echo "    - " . $path . PHP_EOL;
 				$blocks = json_decode(file_get_contents($path));
-				unlink($path);
+				@unlink($path);
 
 				if (!is_array($blocks)) {
 					throw new \Exception("Invalid data", 1);
@@ -250,7 +250,6 @@ class BackupService
 				}
 
 				echo "Total: " . $rowsCount .  PHP_EOL;
-		        @unlink($path);
 			} else {
 				echo "x => File not found: " . $path . PHP_EOL;
 			}

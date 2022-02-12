@@ -85,13 +85,14 @@ final class SQLiteService {
 		return $rowCount;
 	}
 
-	public function range($tableName, $offset = 0, $limit = 10, $orderBy = 'height', $sortBy = 'asc')
+	public function range($tableName, $offset = 0, $limit = 10, $orderBy = 'height', $sortBy = 'asc', $where = '')
 	{
 		$sortBy = strtolower($sortBy);
 		$sortBy = strtoupper($sortBy === 'desc' ? 'desc' : 'asc');
 
 		$query = "
 			SELECT * FROM $tableName
+				$where
 				ORDER BY $orderBy $sortBy
 				LIMIT :offset, :limitTo;
 		";
@@ -111,6 +112,8 @@ final class SQLiteService {
 
         	return $result;
 		} else {
+
+			var_dump('$stmt error');
 			return [];
 		}
 	}

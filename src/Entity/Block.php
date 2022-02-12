@@ -16,7 +16,7 @@ class Block extends AbstractEntity
 	protected $height; // 'height' => 'integer',
 	protected $nonce; // 'nonce' => 'text',
 	protected $previousHash; // 'previousHash' => 'text',
-	protected $hasDomain = false; // 'symbol' => 'text',
+	protected $hasDomain; // 'symbol' => 'text',
 
     public function __construct(array $data = [])
     {

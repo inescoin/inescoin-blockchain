@@ -44,9 +44,9 @@ class BlockManager extends AbstractManager
 		return parent::count();
 	}
 
-	public function range(int $offset = 0, int $limit = 10, string $orderBy = 'height', string $sortBy = 'asc')
+	public function range(int $offset = 0, int $limit = 10, string $orderBy = 'height', string $sortBy = 'asc', string $where = '')
 	{
-		$blocksResult = parent::range($offset, $limit, $orderBy, $sortBy);
+		$blocksResult = parent::range($offset, $limit, $orderBy, $sortBy, $where);
 
 		$blocks = [];
 

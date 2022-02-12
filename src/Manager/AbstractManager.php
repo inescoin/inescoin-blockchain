@@ -34,9 +34,9 @@ abstract class AbstractManager
 		return $this->dbService->query($sql);
 	}
 
-	public function range(int $offset = 0, int $limit = 10, string $orderBy = 'height', string $sortBy = 'asc')
+	public function range(int $offset = 0, int $limit = 10, string $orderBy = 'height', string $sortBy = 'asc', string $where = '')
 	{
-		return $this->dbService->range($this->tableName, $offset, $limit, $orderBy, $sortBy);
+		return $this->dbService->range($this->tableName, $offset, $limit, $orderBy, $sortBy, $where);
 	}
 
 	public function last(int $limit = 1, string $orderBy = 'height', string $sortBy = 'desc')

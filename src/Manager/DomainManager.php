@@ -33,9 +33,9 @@ class DomainManager extends AbstractManager
 	 *
 	 * @return     array
 	 */
-	public function rangeAsArray(int $offset = 0, int $limit = 10, string $orderBy = 'height', string $sortBy = 'asc'): array
+	public function rangeAsArray(int $offset = 0, int $limit = 10, string $orderBy = 'height', string $sortBy = 'asc', string $where = ''): array
 	{
-		return parent::range($offset, $limit, $orderBy, $sortBy);
+		return parent::range($offset, $limit, $orderBy, $sortBy, $where);
 	}
 
 	/**
