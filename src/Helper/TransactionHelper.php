@@ -15,12 +15,12 @@ use Inescoin\Model\Transaction;
 class TransactionHelper
 {
 
-	public static function generateGenesisTansaction($address, $minerReward, $date = 'now', $prefix = null)
+	public static function generateGenesisTansaction(string $address, string|int $minerReward, string $date = 'now', ?string $prefix = null): Transaction
 	{
 		return self::generateCoinbaseTansaction($address, $minerReward, $date, $prefix);
 	}
 
-	public static function generateCoinbaseTansaction($address, $minerReward, $date = 'now', $prefix = null)
+	public static function generateCoinbaseTansaction(string $address, string $minerReward, string $date = 'now', ?string $prefix = null): Transaction
 	{
 		$blockchainManager = BlockchainManager::getInstance($prefix);
 
@@ -50,7 +50,7 @@ class TransactionHelper
 		return $transaction;
 	}
 
-	public static function isValidTransactions(Block $block, $prefix = null)
+	public static function isValidTransactions(Block $block, ?string $prefix = null): bool
     {
         $blockInfos = $block->getJsonInfos();
 

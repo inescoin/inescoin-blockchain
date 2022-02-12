@@ -11,7 +11,6 @@ abstract class AbstractManager
 	protected $dbService;
 
 	public function __construct(?string $database = BlockchainConfig::NAME) {
-
 		$database = $database ?? BlockchainConfig::NAME;
 		$this->dbService = SQLiteService::getInstance($database);
 	}
@@ -73,6 +72,11 @@ abstract class AbstractManager
 	public function delete(mixed $id, string $idName = 'id'): int
 	{
 		return $this->dbService->delete($id, $this->tableName, $idName);
+	}
+
+	public function deleteLess(mixed $id, string $idName = 'id'): int
+	{
+		return $this->dbService->deleteLess($id, $this->tableName, $idName);
 	}
 
 	public function dropTable(): bool

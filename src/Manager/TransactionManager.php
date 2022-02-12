@@ -45,6 +45,43 @@ class TransactionManager extends AbstractManager
 		return parent::count();
 	}
 
+	/**
+	 * @param      mixed        $id
+	 * @param      int  		$page
+	 * @param      int          $size
+	 *
+	 * @return     Transfer[]
+	 */
+	public function selectHistory(mixed $id, int $page = 1, int $size = 500): array
+	{
+		$from = 0;
+		if ($page > 1) {
+			$from = ((int) $page * $size - 1) - $size;
+		}
+
+		$sql = "
+		SELECT *
+			FROM {$this->tableName}
+			WHERE url = '$id'
+			ORDER BY height DESC
+			LIMIT $from, $size;
+		";
+
+		//echo $sql . PHP_EOL;
+
+		$transactionsResult = $this->query($sql);
+
+		$transactions = [];
+
+		if (!empty($transactionsResult)) {
+			foreach($transactionsResult as $transaction) {
+				$transactions[] = $transaction;
+			}
+		}
+
+		return $transactions;
+	}
+
 	public function range(int $offset = 0, int $limit = 10, string $orderBy = 'height', string $sortBy = 'asc')
 	{
 		$blocksResult = parent::range($offset, $limit, $orderBy, $sortBy);

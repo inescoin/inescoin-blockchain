@@ -10,16 +10,13 @@ class Block extends AbstractEntity
 	protected $countTransaction; // 'countTransaction' => 'integer',
 	protected $createdAt; // 'createdAt' => 'integer',
 	protected $data; // 'data' => 'text',
-	//protected $previousCumulativeDifficulty; // 'previousCumulativeDifficulty' => 'integer',
 	protected $cumulativeDifficulty; // 'cumulativeDifficulty' => 'integer',
 	protected $difficulty; // 'difficulty' => 'integer',
 	protected $hash; // 'hash' => 'text PRIMARY KEY',
 	protected $height; // 'height' => 'integer',
-	//protected $name; // 'name' => 'text',
 	protected $nonce; // 'nonce' => 'text',
 	protected $previousHash; // 'previousHash' => 'text',
-	//protected $symbol; // 'symbol' => 'text',
-	//protected $status; // 'status' => 'text'
+	protected $hasDomain = false; // 'symbol' => 'text',
 
     public function __construct(array $data = [])
     {
@@ -262,6 +259,26 @@ class Block extends AbstractEntity
     public function setPreviousHash($previousHash)
     {
         $this->previousHash = $previousHash;
+
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getHasDomain()
+    {
+        return $this->hasDomain;
+    }
+
+    /**
+     * @param mixed $hasDomain
+     *
+     * @return self
+     */
+    public function setHasDomain($hasDomain)
+    {
+        $this->hasDomain = $hasDomain;
 
         return $this;
     }

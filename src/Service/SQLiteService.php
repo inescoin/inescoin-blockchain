@@ -310,6 +310,28 @@ final class SQLiteService {
 	}
 
 	/**
+	 * @param  int    $id
+	 * @param  string $tableName
+	 * @param  string $idName
+	 *
+	 * @return int
+	 */
+	public function deleteLess(int $id, string $tableName, string $idName = 'id'): int
+	{
+		$query = "
+			DELETE FROM $tableName
+				WHERE $idName <= :$idName;
+		";
+
+		$stmt = $this->pdo->prepare($query);
+
+		$stmt->bindValue(":$idName", $id);
+		$stmt->execute();
+
+		return $stmt->rowCount();
+	}
+
+	/**
 	 * Drop table
 	 *
 	 * @param      string  $tableName  The table name

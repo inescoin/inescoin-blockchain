@@ -343,58 +343,58 @@ class Transaction {
 	        $action = $_todo['action'];
 			$url = strtolower($_todo['name']);
 
-	        if ($action !== 'update' && !($this->amount === 99999000000 || $this->amount === 199999000000 || $this->amount === 299999000000)) {
-	            var_dump('[Transaction] [Todo] ERROR: Bad domain amount: ' . $this->amount);
+            if ($action !== BlockchainConfig::WEB_ACTION_UPDATE && !in_array($this->amount, BlockchainConfig::WEB_COSTS_WITHOUT_UPDATE)) {
+	            var_dump('[Transaction] [Todo] ' . "[$url - $action]" . ' ERROR: Bad domain amount: ' . $this->amount);
 				return false;
 	        }
 
-	        if ($action === 'update' && $this->amount !== 999000000) {
-	            var_dump('[Transaction] [Todo] ERROR: Bad domain amount 2');
+            if ($action === BlockchainConfig::WEB_ACTION_UPDATE && $this->amount !== BlockchainConfig::WEB_COST_UPDATE) {
+	            var_dump('[Transaction] [Todo] ' . "[$url - $action]" . ' ERROR: Bad domain amount 2');
 				return false;
 	        }
 
 	        if (!ctype_alnum($url)) {
-	        	var_dump('[Transaction] [Todo] ERROR: Domain name not alphanumeric: ' . $url);
+	        	var_dump('[Transaction] [Todo] ' . "[$url - $action]" . ' ERROR: Domain name not alphanumeric: ' . $url);
 				return false;
 	        }
 
-	        if (strlen($url) < 7) {
-	        	var_dump('[Transaction] [Todo] ERROR: Domain name too small < 7');
+            if (strlen($url) < BlockchainConfig::WEB_URL_MIN_SIZE) {
+	        	var_dump('[Transaction] [Todo] ' . "[$url - $action]" . ' ERROR: Domain name too small < ' . BlockchainConfig::WEB_URL_MIN_SIZE);
 				return false;
 	        }
 
-	        if (strlen($url) > 70) {
-	        	var_dump('[Transaction] [Todo] ERROR: Domain name too big > 70');
+            if (strlen($url) > BlockchainConfig::WEB_URL_MAX_SIZE) {
+	        	var_dump('[Transaction] [Todo] ' . "[$url - $action]" . ' ERROR: Domain name too big > ' . BlockchainConfig::WEB_URL_MAX_SIZE);
 				return false;
 	        }
 
-	        $domainExists = $this->blockchainManager->getDomain()->exists($url, 'url');
+	   //      $domainExists = $this->blockchainManager->getDomain()->exists($url, 'url');
 
-	        if ($action === 'create') {
-				if ($domainExists) {
-               	 	var_dump('[Transaction] [Todo] ERROR: Domain already exists');
-                    return false;
-                }
-	        } else {
-                if (!$domainExists) {
-               	 	var_dump('[Transaction] [Todo] ERROR: Domain not found');
-                    return false;
-                }
+	   //      if ($action === 'create') {
+				// if ($domainExists) {
+    //            	 	var_dump('[Transaction] [Todo] ' . "[$url - $action]" . ' ERROR: Domain already exists');
+    //                 return false;
+    //             }
+	   //      } else {
+    //             if (!$domainExists) {
+    //            	 	var_dump('[Transaction] [Todo] ' . "[$url - $action]" . ' ERROR: Domain not found');
+    //                 return false;
+    //             }
 
-                if ($action !== 'renew') {
-	                $domain = $this->blockchainManager->getDomain()->selectFisrt($url, 'url');
+    //             if ($action !== 'renew') {
+	   //              $domain = $this->blockchainManager->getDomain()->selectFisrt($url, 'url');
 
-	                if ($domain->getOwnerAddress() !== $this->fromWalletId) {
-               	 		var_dump('[Transaction] [Todo] ERROR: Action not authorized, ownerAddress not same');
-	                    return false;
-	                }
+	   //              if ($domain->getOwnerAddress() !== $this->fromWalletId) {
+    //            	 		var_dump('[Transaction] [Todo] ' . "[$url - $action]" . ' ERROR: Action not authorized, ownerAddress not same');
+	   //                  return false;
+	   //              }
 
-	                if ($domain->getOwnerPublicKey() !== $this->publicKey) {
-               	 		var_dump('[Transaction] [Todo] ERROR: Action not authorized, ownerPublicKey not same');
-	                    return false;
-	                }
-	            }
-            }
+	   //              if ($domain->getOwnerPublicKey() !== $this->publicKey) {
+    //            	 		var_dump('[Transaction] [Todo] ' . "[$url - $action]" . ' ERROR: Action not authorized, ownerPublicKey not same');
+	   //                  return false;
+	   //              }
+	   //          }
+    //         }
 
             $isWeb = true;
 	    }

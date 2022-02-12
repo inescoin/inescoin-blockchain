@@ -162,7 +162,7 @@ final class MinerService
 
         $this->logger->info("[Miner] Nonce detected ---> " . $this->pool[$data['walletAddress']]['nonce']);
 
-        $block = Block::toBlock($this->pool[$data['walletAddress']]);
+        $block = BlockHelper::fromArrayToBlockModel($this->pool[$data['walletAddress']]);
         $block->setMerkelRoot($this->pool[$data['walletAddress']]['merkleRoot']);
 
         $lastBlock = $this->getBlockchainService()->getBlockchainManager()->getBlock()->last();

@@ -6,7 +6,8 @@ class Todo extends AbstractEntity
 {
 	protected $hash; // 'hash' => 'text',
 	protected $ownerAddress; // 'ownerAddress' => 'text',
-	protected $ownerPublicKey; // 'ownerPublicKey' => 'text',
+    protected $ownerPublicKey; // 'ownerPublicKey' => 'text',
+	protected $keyName; // 'ownerPublicKey' => 'text',
 	protected $command; // 'command' => 'text',
 	protected $height; // 'height' => 'integer',
 	protected $amount; // 'amount' => 'real',
@@ -174,6 +175,26 @@ class Todo extends AbstractEntity
     public function setCreatedAt($createdAt)
     {
         $this->createdAt = $createdAt;
+
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getKeyName()
+    {
+        return $this->keyName;
+    }
+
+    /**
+     * @param mixed $keyName
+     *
+     * @return self
+     */
+    public function setKeyName($keyName)
+    {
+        $this->keyName = $keyName;
 
         return $this;
     }

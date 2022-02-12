@@ -14,6 +14,7 @@ use Inescoin\Helper\TransactionHelper;
 use Inescoin\Manager\BlockchainManager;
 use Inescoin\Model\Block as BlockModel;
 use Inescoin\Model\Transaction;
+use Inescoin\Service\LoggerService;
 
 class BlockHelper
 {
@@ -29,11 +30,11 @@ class BlockHelper
         $blocksToSave = [];
 
         $blockchainManager = new BlockchainManager($database);
+        $logger = (LoggerService::getInstance())->getLogger();
 
         $blocksList = [];
         $transactionsList = [];
         $transferInTransaction = [];
-        $toDoInTransaction = [];
         $addressBalanceTo = [];
         $addressBalanceFrom = [];
         $finalHolders = [BlockchainConfig::NAME];
@@ -54,8 +55,11 @@ class BlockHelper
             $wallets[BlockchainConfig::NAME] = $walletBank[BlockchainConfig::NAME]->getDataAsArray();
         }
 
+        $lastBlock = $blockchainManager->getBlock()->last();
+        $lastBlockHeight = 1;
+
         $previousBlock = !$resetMode
-            ? $blockchainManager->getBlock()->last()
+            ? $lastBlock
             : null;
 
         if (null !== $previousBlock) {
@@ -67,13 +71,12 @@ class BlockHelper
 
             if (null !== $previousBlock) {
                 if ($previousBlock->getHeight() === $block->getHeight()) {
-                    // var_dump('[Blockchain] $previousBlock->getHeight === $block->getHeight');
+                    $logger->error('[BlockHelper] [extractBlock] $previousBlock->getHeight === $block->getHeight');
                     continue;
                 }
 
-                var_dump($previousBlock->getHeight() . '<->' . $blockModel->getHeight());
                 if (!$previousBlock->isNextValid($blockModel)) {
-                    // var_dump('[Blockchain] [error] $previousBlock->isNextValid -----');
+                    $logger->error('[BlockHelper] [extractBlock] $previousBlock->isNextValid');
                     continue;
                 }
             }
@@ -81,6 +84,8 @@ class BlockHelper
             $previousBlock = $blockModel;
 
             $_block = $blockModel->getJsonInfos();
+
+            $hasDomain = false;
 
             $blockFee = 0;
             $blocksList[$_block['height']] = $_block;
@@ -122,8 +127,8 @@ class BlockHelper
 
                 if ($transaction['coinbase'] && $fromWalletId === BlockchainConfig::NAME) {
                     if ($_block['height'] !== 1 && $wallets[BlockchainConfig::NAME]['hash'] !== '' && $wallets[BlockchainConfig::NAME]['hash'] !== $transaction['bankHash']) {
-                        var_dump('Bank Hash ERROR <---------------------------------------------> '. $_block['height']);
-                        var_dump('------------------  ' . $wallets[BlockchainConfig::NAME]['hash'] .' <=> ' . $transaction['bankHash'] . ' ------------------', $transaction);
+                        $logger->error('[BlockHelper] [extractBlock] Bank Hash ERROR >> '. $_block['height']);
+                        $logger->error('[BlockHelper] [extractBlock] ' . $wallets[BlockchainConfig::NAME]['hash'] .' <=> ' . $transaction['bankHash']);
 
                         break 2;
                         // exit();
@@ -132,7 +137,7 @@ class BlockHelper
                     $transfers = $transaction['transfers'];
 
                     if (empty($transfers)) {
-                        var_dump('[BlockHelper] Transfer empty', $transactionsList[$transaction['hash']]);
+                        $logger->error('[BlockHelper] [extractBlock] Transfer empty', $transactionsList[$transaction['hash']]);
 
                         break 2;
                     }
@@ -156,7 +161,7 @@ class BlockHelper
             }
 
             if (empty($minerTransaction)) {
-                var_dump('!! FATAL ERROR !! - No miner transaction -', $transaction);
+                $logger->error('[BlockHelper] [extractBlock] !! FATAL ERROR !! - No miner transaction');
                 continue;
             }
 
@@ -207,7 +212,7 @@ class BlockHelper
                 $addressFrom = $transactionsList[$transaction['hash']]['fromWalletId'];
 
                 if (!isset($wallets[$addressFrom]) || $wallets[$addressFrom]['amount'] <= 0 && BlockchainConfig::NAME !== $addressFrom) {
-                    var_dump('Invalid amount <---------------------------------------------> amount:' . $wallets[$addressFrom]['amount'] . ' | '. $_block['height'] . ' |  ' . $transaction['hash'] . ' | ' . $addressFrom);
+                    $logger->error('[BlockHelper] [extractBlock] Invalid amount:' . $wallets[$addressFrom]['amount'] . ' | '. $_block['height'] . ' |  ' . $transaction['hash'] . ' | ' . $addressFrom);
                     continue;
                 }
 
@@ -253,7 +258,7 @@ class BlockHelper
                     }
 
                     if (empty($transfers)) {
-                        var_dump('Empty transfer <---------------------------------------------> '. $_block['height'] . ' ' . $transaction['hash']);
+                        $logger->error('[BlockHelper] [extractBlock] Empty transfer '. $_block['height'] . ' ' . $transaction['hash']);
                         break;
                     }
 
@@ -354,7 +359,7 @@ class BlockHelper
 
                                 $keyName = $toDo['hash'] . '-' . md5($_todo) . '-' . $transaction['hash'];
 
-                                $toDoInTransaction[$keyName] = [
+                                self::extractDomain([
                                     'hash' => $toDo['hash'],
                                     'keyName' => $keyName,
                                     'command' => $_todo,
@@ -364,18 +369,20 @@ class BlockHelper
                                     'ownerAddress' => $transactionsList[$transaction['hash']]['fromWalletId'],
                                     'ownerPublicKey' => $transaction['publicKey'],
                                     'createdAt' => time()
-                                ];
+                                ]);
 
-                                self::extractDomain($toDoInTransaction[$keyName]);
+                                if (!$hasDomain) {
+                                    $hasDomain = true;
+                                }
                             }
-
                         }
                     }
                 } else {
-                    var_dump("[ESBlockService] [bulkBlocks] Invalid amount spent: address => " . $addressFrom . " | amount => " . $transaction['amount'] . " | Height => " . $block['height']);
+                    $logger->error("[BlockHelper] [extractBlock] Invalid amount spent: address => " . $addressFrom . " | amount => " . $transaction['amount'] . " | Height => " . $block['height']);
                 }
             }
 
+            $block->setHasDomain($hasDomain);
             $blocksToSave[] = $block;
         }
 
@@ -385,10 +392,6 @@ class BlockHelper
 
         if (!empty($transferInTransaction)) {
             $blockchainManager->getTransfer()->bulkSave($transferInTransaction);
-        }
-
-        if (!empty($toDoInTransaction)) {
-            $blockchainManager->getTodo()->bulkSave($toDoInTransaction);
         }
 
         $finalUpdateWallets = [];
@@ -468,6 +471,17 @@ class BlockHelper
             $blockchainManager->getBlock()->bulkSave($blocksToSave);
         }
 
+        if ($lastBlockHeight >= 1) {
+            $range = 100;
+
+            var_dump("LastBlockHeight => $lastBlockHeight *------- ");
+            while(!empty($blocks = $blockchainManager->getBlock()->range($lastBlockHeight - 1, $range))) {
+                var_dump(' ------* ' . count($blocks) . " | $lastBlockHeight *------- ");
+
+                $lastBlockHeight += $range;
+            }
+        }
+
         return count($blocksToSave);
     }
 
@@ -481,45 +495,47 @@ class BlockHelper
     {
         $blockchainManager = new BlockchainManager($database);
 
+        $logger = (LoggerService::getInstance())->getLogger();
+
         $command = (array) json_decode($todo['command']);
 
         if (!isset($command['name'])) {
-            var_dump($todo['hash'] . ' - $command[\'name\'] not found');
+            $logger->error($todo['hash'] . ' - $command[\'name\'] not found');
             return false;
         }
 
         if (!isset($command['action'])) {
-            var_dump($todo['hash'] . ' - $command[\'action\'] not found');
+            $logger->error($todo['hash'] . ' - $command[\'action\'] not found');
             return false;
         }
 
         if (!isset($command['signature'])) {
-            var_dump($todo['hash'] . ' - $command[\'signature\'] not found');
+            $logger->error($todo['hash'] . ' - $command[\'signature\'] not found');
             return false;
         }
 
         if (!isset($todo['transactionHash'])) {
-            var_dump($todo['hash'] . ' - $command[\'transactionHash\'] not found');
+            $logger->error($todo['hash'] . ' - $command[\'transactionHash\'] not found');
             return false;
         }
 
         if (!isset($todo['ownerAddress'])) {
-            var_dump($todo['hash'] . ' - $command[\'ownerAddress\'] not found');
+            $logger->error($todo['hash'] . ' - $command[\'ownerAddress\'] not found');
             return false;
         }
 
         if (!isset($todo['ownerPublicKey'])) {
-            var_dump($todo['hash'] . ' - $command[\'ownerPublicKey\'] not found');
+            $logger->error($todo['hash'] . ' - $command[\'ownerPublicKey\'] not found');
             return false;
         }
 
         if (!isset($todo['height'])) {
-            var_dump($todo['hash'] . ' - $command[\'height\'] not found');
+            $logger->error($todo['hash'] . ' - $command[\'height\'] not found');
             return false;
         }
 
         if (!isset($todo['keyName'])) {
-            var_dump($todo['hash'] . ' - $command[\'keyName\'] not found');
+            $logger->error($todo['hash'] . ' - $command[\'keyName\'] not found');
             return false;
         }
 
@@ -553,19 +569,17 @@ class BlockHelper
                 }
 
                 if ($errorAmount) {
-                    var_dump('[ERROR] [create] Bad action amount: ' . $todo['hash']);
-                    var_dump($todo['amount']);
+                    $logger->error('[ERROR] [create] Bad action amount: ' . $todo['hash']);
                     return false;
                 }
 
                 if (!$blockchainManager->getDomain()->exists($command['name'], 'url')) {
                     $blockchainManager->getDomain()->insert($exec);
-                    var_dump('[SUCCESS] [create] ' . $exec['url']);
+                    $logger->info('[SUCCESS] [create] ' . $exec['url']);
                 } else {
-                    var_dump('[ERROR] [create] already exists ' . $exec['url']);
+                    $logger->error('[ERROR] [create] already exists ' . $exec['url']);
                 }
 
-                $blockchainManager->getTodo()->delete($todo['keyName'], 'keyName');
 
                 break;
 
@@ -587,26 +601,24 @@ class BlockHelper
                 }
 
                 if ($errorAmount) {
-                    var_dump('[ERROR] [create] Bad action amount: ' . $todo['hash']);
-                    var_dump($todo['amount']);
+                    $logger->error('[ERROR] [create] Bad action amount: ' . $todo['hash']);
                     return false;
                 }
 
                 if ($errorAmount) {
-                    var_dump('[ERROR] [create] Bad action amount: ' . $todo['hash']);
+                    $logger->error('[ERROR] [create] Bad action amount: ' . $todo['hash']);
                     return false;
                 }
 
                 if (!$blockchainManager->getDomain()->exists($command['name'], 'url')) {
-                    var_dump('[ERROR] [renew] not found ' . $exec['url']);
+                    $logger->error('[ERROR] [renew] not found ' . $exec['url']);
                     return false;
                 }
 
                 $website = $blockchainManager->getDomain()->selectFisrt($command['name'], 'url');
 
                 if (empty($website)) {
-                    var_dump('[ERROR] Domain not found: ' . $exec['url']);
-                    $blockchainManager->getTodo()->delete($todo['keyName'], 'keyName');
+                    $logger->error('[ERROR] Domain not found: ' . $exec['url']);
                     return false;
                 }
 
@@ -634,25 +646,31 @@ class BlockHelper
 
                 $updateDomain = $blockchainManager->getDomain()->update($exec['url'], $upExec, 'url');
                 if (isset($updateDomain['error'])) {
-                    var_dump('[ERROR] [$updateDomain] : ' . $todo['hash'] . ' | ' . $exec['url']);
+                    $logger->error('[ERROR] [$updateDomain] : ' . $todo['hash'] . ' | ' . $exec['url']);
                     return false;
                 }
 
-                var_dump('[SUCCESS] [renew] ' . $exec['url']);
-                $blockchainManager->getTodo()->delete($todo['keyName'], 'keyName');
+                $logger->info('[SUCCESS] [renew] ' . $exec['url']);
                 break;
 
             case 'update':
                 if((int) $todo['amount'] !== BlockchainConfig::WEB_COST_UPDATE) {
-                    var_dump('[ERROR] [update] Bad action amount: ' . $todo['hash'] . ' | Given: ' . $todo['amount'] . ' | Excepted: ' . BlockchainConfig::WEB_COST_UPDATE);
+                    $logger->error('[ERROR] [update] Bad action amount: ' . $todo['hash'] . ' | Given: ' . $todo['amount'] . ' | Excepted: ' . BlockchainConfig::WEB_COST_UPDATE);
                     return false;
                 }
 
-                $domain = $blockchainManager->getDomain()->selectFisrt($command['name'], 'url');
+                if (!$blockchainManager->getDomain()->exists($exec['url'], 'url')) {
+                    $logger->error('[ERROR] [update] not found ' . $exec['url']);
+                    return false;
+                }
+
+                $domain = $blockchainManager->getDomain()->selectFisrt($exec['url'], 'url');
 
                 if (empty($domain)) {
-                    var_dump('[ERROR] Domain not found: ' . $command['name']);
+                    $logger->error('[ERROR] Domain not found: ' . $exec['url']);
                     $blockchainManager->getTodo()->delete($todo['keyName'], 'keyName');
+
+                    return false;
                 } else {
                     $domainSource = $domain->getDataAsArray();
                     $exec = [
@@ -672,28 +690,45 @@ class BlockHelper
                         $blockchainManager->getWebsite()->insert($exec);
                     }
 
-                    var_dump('[SUCCESS] [update] ' . $exec['url']);
+                    $logger->info('[SUCCESS] [update] ' . $exec['url']);
                     $blockchainManager->getTodo()->delete($todo['keyName'], 'keyName');
                 }
                 break;
 
             case 'delete':
                 if((int) $todo['amount'] !== BlockchainConfig::WEB_COST_DELETE) {
-                    var_dump('[ERROR] [delete] Bad action amount: ' . $todo['hash'] . ' | ' . $exec['url']);
+                    $logger->error('[ERROR] [delete] Bad action amount: ' . $todo['hash'] . ' | ' . $exec['url']);
                     return false;
                 }
 
-                $blockchainManager->getDomain()->delete($command['name'], 'url');
-                $blockchainManager->getWebsite()->delete($command['name'], 'url');
-                $blockchainManager->getTodo()->delete($todo['keyName'], 'keyName');
+                if (!$blockchainManager->getDomain()->exists($exec['url'], 'url')) {
+                    $logger->error('[ERROR] [update] not found ' . $exec['url']);
+                    return false;
+                }
 
-                var_dump('[SUCCESS] [delete] ' . $exec['url']);
+                $blockchainManager->getDomain()->delete($exec['url'], 'url');
+                $blockchainManager->getWebsite()->delete($exec['url'], 'url');
+
+                $logger->info('[SUCCESS] [delete] ' . $exec['url']);
                 break;
         }
+
+        $blockchainManager->getTodo()->delete($todo['keyName'], 'keyName');
 
         return true;
     }
 
+    /**
+     * @param      int         $height
+     * @param      string      $previousHash
+     * @param      int         $createdAt
+     * @param      string      $data
+     * @param      int         $difficulty
+     * @param      string      $nonce
+     * @param      string      $merkleRoot
+     *
+     * @return     string
+     */
     public static function calculateHash(int $height, string $previousHash, int $createdAt, string $data, int $difficulty, string $nonce, string $merkleRoot): string
     {
         $configHash = BlockchainConfig::getHash();
@@ -701,6 +736,11 @@ class BlockHelper
         return Pow::hash($merkleRoot.$configHash.$height.$previousHash.$createdAt.$difficulty.$nonce);
     }
 
+    /**
+     * @param      array   $block
+     *
+     * @return     string
+     */
     public static function calculateHashFromArray(array $block): string
     {
         return self::calculateHash(
@@ -714,7 +754,13 @@ class BlockHelper
         );
     }
 
-    public static function generateGenesisBlock($prefix = BlockchainConfig::NAME, $showGenensisAndExit = false): BlockModel
+    /**
+     * @param      string      $prefix
+     * @param      bool        $showGenensisAndExit
+     *
+     * @return     BlockModel
+     */
+    public static function generateGenesisBlock(string $prefix = BlockchainConfig::NAME, $showGenensisAndExit = false): BlockModel
     {
         $genesisTransaction = TransactionHelper::generateGenesisTansaction(
             BlockchainConfig::GENESIS_MINER_ADDRESS,
@@ -858,14 +904,19 @@ class BlockHelper
         }
     }
 
-    public static function cleanBlock(array $blockArray, string $transactionHash)
+    /**
+     * @param      array   $blockArray
+     * @param      string  $transactionHash
+     *
+     * @return     array
+     */
+    public static function cleanTodoFromBlock(array $blockArray, string $transactionHash): array
     {
         if (!isset($transactionHash)) {
-            var_dump('[Block] [cleanBlock] $transactionHash not found');
-            return;
+            return $blockArray;
         }
 
-        $block = self::toBlock($blockArray);
+        $block = self::fromArrayToBlockModel($blockArray);
         $transactions = $block->getDataJson();
 
 
@@ -888,7 +939,14 @@ class BlockHelper
         return $block->getInfos();
     }
 
-    public static function toBlock(array $block)
+    // public function clean
+
+    /**
+     * @param      array       $block
+     *
+     * @return     BlockModel
+     */
+    public static function fromArrayToBlockModel(array $block): BlockModel
     {
         if (!$block) {
             return null;
@@ -903,7 +961,7 @@ class BlockHelper
         $difficulty = (int) $block['difficulty'];
         $nonce = (int) $block['nonce'];
 
-        $data = BlockModel::getDataDecoded(json_decode(base64_decode($dataBase64)));
+        $data = BlockModel::getDataDecoded($dataBase64);
 
         $totalTransaction = isset($block['countTransaction'])
             ? (int) $block['countTransaction']

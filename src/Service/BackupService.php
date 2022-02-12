@@ -13,7 +13,7 @@ use Inescoin\Model\Block as BlockModel;
 class BackupService
 {
 	protected $prefix;
-	protected $destination;
+	protected $destinationPage;
 	protected $folder;
 	protected $fileName;
 	protected $esService;
@@ -26,28 +26,26 @@ class BackupService
 	{
 		$this->executionTimeStart = microtime(true);
 
+		$this->force = $force;
 		$this->prefix = $prefix;
 
 		$this->_initFilename($fileName);
 
-		$time = time();
-		$this->folder = getcwd() . '/inescoin-blockchain-' . $time;
+		$this->folder = getcwd() . '/' . $prefix. '-blockchain-' . time();
+
 		if (!is_dir($this->folder)) {
 			mkdir($this->folder, 0777);
 		}
 
-		$this->destination =  $this->folder . $this->fileName;
-		$this->gzName = $this->destination . '.tar.gz';
-
-		$this->force = $force;
-
-		$this->blockchainManager = new BlockchainManager($prefix);
-
-		$this->_checkIfGzExists();
+		$this->destinationPage =  $this->folder . '/inescoin';
 	}
 
 	public function export()
 	{
+		$this->_checkIfGzExists();
+
+		$this->blockchainManager = new BlockchainManager($this->prefix);
+
 		$lastBlock = $this->blockchainManager->getBlock()->last();
 
 		if (null === $lastBlock) {
@@ -72,7 +70,7 @@ class BackupService
 		}
 
 		$previousBlock = null;
-		file_put_contents($this->destination . ".$page.json", '[' . PHP_EOL);
+		file_put_contents($this->destinationPage . ".$page.json", '[' . PHP_EOL);
 		while(!empty($blocks = $this->blockchainManager->getBlock()->range($fromBlockHeight, $range))) {
 		    if ($toBlockHeight === $fromBlockHeight && $topBlockHeight === $toBlockHeight) {
 		        break;
@@ -83,32 +81,31 @@ class BackupService
 		    $contents = '';
 
 		    foreach ($blocks as $block) {
+		    	$blockModel = new BlockModel($block->getDataAsArray());
 		        if (null !== $previousBlock) {
-		            if ($previousBlock->getHeight() === $block->getHeight()) {
-		                var_dump('[Blockchain] $previousBlock->getHeight === $block->getHeight');
-		                continue;
-		            }
-
-		            if (!$previousBlock->isNextValid($block)) {
+		            if (!$previousBlock->isNextValid($blockModel)) {
 		                var_dump('[Blockchain] [error] $previousBlock->isNextValid');
 		                exit();
 		            }
 		        }
 
-		        $previousBlock = $block;
+		        $previousBlock = $blockModel;
 		        $compressedBlock = BlockHelper::compress($block->getDataAsArray());
 		        $height = $block->getHeight();
 		        $contents .= json_encode($compressedBlock);
 
 		        if ($position % $splitSize === 0) {
 		            $contents .= PHP_EOL;
-		            file_put_contents($this->destination . ".$page.json", $contents, FILE_APPEND | LOCK_EX);
-		            file_put_contents($this->destination . ".$page.json", ']' . PHP_EOL, FILE_APPEND | LOCK_EX);
+		            file_put_contents($this->destinationPage . ".$page.json", $contents, FILE_APPEND | LOCK_EX);
+		            file_put_contents($this->destinationPage . ".$page.json", ']' . PHP_EOL, FILE_APPEND | LOCK_EX);
 		            $contents = '';
 
+		            var_dump('     -> Finsished -> ' . $this->destinationPage . ".$page.json");
+			    	var_dump("------------------------------------------> totalPages: [$rangePosition|$totalPages]");
+
 		            $page++;
-		            var_dump('     -> Finsished -> ' . $this->destination . ".$page.json");
-		            file_put_contents($this->destination . ".$page.json", '[' . PHP_EOL);
+		            file_put_contents($this->destinationPage . ".$page.json", '[' . PHP_EOL);
+
 		        }
 
 		        if ($contents !== '') {
@@ -126,8 +123,11 @@ class BackupService
 		        }
 		    }
 
-		    var_dump("------------------------------------------> totalPages: [$rangePosition|$totalPages]");
-		    file_put_contents($this->destination . ".$page.json", $contents, FILE_APPEND | LOCK_EX);
+		    if ($rangePosition == $totalPages) {
+		    	var_dump('     -> Finsished -> ' . $this->destinationPage . ".$page.json");
+			    file_put_contents($this->destinationPage . ".$page.json", $contents, FILE_APPEND | LOCK_EX);
+			    var_dump("------------------------------------------> totalPages: [$rangePosition|$totalPages]");
+		    }
 
 		    $fromBlockHeight = $toBlockHeight;
 		    $toBlockHeight = $toBlockHeight + $range;
@@ -142,20 +142,21 @@ class BackupService
 		    $contents = substr($contents, 0, -1);
 		}
 
-		file_put_contents($this->destination . ".$page.json", ']' , FILE_APPEND | LOCK_EX);
+		file_put_contents($this->destinationPage . ".$page.json", ']' , FILE_APPEND | LOCK_EX);
 
-		$dzfile = $this->destination . '.tar';
-		$pharData = new \PharData($dzfile);
+		$pharData = new \PharData($this->dzfile);
 		$pharData->buildFromDirectory($this->folder);
 
 		for ($i = 1; $i <= $page; $i++) {
-		    //unlink($this->destination . ".$i.json");
+		    @unlink($this->destinationPage . ".$i.json");
 		}
+
 
 		$pharData->setMetadata(['page' => $page]);
 
 		$pharData->compress(\Phar::GZ);
-		@unlink($dzfile);
+		@unlink($this->dzfile);
+		//@rmdir($this->folder);
 
 
 		$endTime = microtime(true);
@@ -163,7 +164,7 @@ class BackupService
 
         echo ''. PHP_EOL;
         echo '---------------------------------------------------------------------'. PHP_EOL;
-        echo '   Exported file -> ' . $dzfile . '.gz' . PHP_EOL;
+        echo '   Exported file -> ' . $this->gzName . PHP_EOL;
         echo '---------------------------------------------------------------------'. PHP_EOL;
         echo '!! finish !! => Execution time: ' . $execTime .' sec' . PHP_EOL;
         echo '---------------------------------------------------------------------'. PHP_EOL;
@@ -171,17 +172,28 @@ class BackupService
 
 	public function import()
 	{
-		$this->blockchainManager->dropTables();
-
-		$gzFile = getcwd() . $this->fileName;
-		if (!file_exists($gzFile)) {
-		    die("'{$gzFile}' not found" . PHP_EOL);
+		if (!file_exists($this->gzName)) {
+	        @rmdir($this->folder);
+		    die("'{$this->gzName}' not found." . PHP_EOL);
 		}
 
-		echo "{$gzFile} loaded, start scan..." . PHP_EOL;
+		$database = getcwd() . '/' .$this->prefix . '.dbi';
+
+		if (file_exists($database)) {
+			if ($this->force) {
+				if(@unlink($database)) {
+					echo "{$database} removed..." . PHP_EOL;
+				}
+			} else {
+		        @rmdir($this->folder);
+			    die(PHP_EOL . "'{$database}' file already exists, use --force option to replace it." . PHP_EOL . PHP_EOL);
+			}
+		}
 
 
-		$backupPhar = new \PharData($gzFile, \FilesystemIterator::UNIX_PATHS);
+		echo "{$this->gzName} loaded, start scan..." . PHP_EOL;
+
+		$backupPhar = new \PharData($this->gzName, \FilesystemIterator::UNIX_PATHS);
 
 		echo "Check file format [tar]..." . PHP_EOL;
 
@@ -209,10 +221,7 @@ class BackupService
 		$this->folder = $this->folder; //getcwd() . '/inescoin-blockchain-' . $time . '/';
 		$backupPhar->extractTo($this->folder);
 
-		if ($this->force) {
-			echo "Database [{$this->prefix}]: cleaned" . PHP_EOL;
-			//$this->esService->resetAll(0);
-		}
+		(new BlockchainManager($this->prefix))->dropTables();
 
 		echo "Import stared..." . PHP_EOL;
 
@@ -226,6 +235,7 @@ class BackupService
 			if (file_exists($path)) {
 				echo "    - " . $path . PHP_EOL;
 				$blocks = json_decode(file_get_contents($path));
+				unlink($path);
 
 				if (!is_array($blocks)) {
 					throw new \Exception("Invalid data", 1);
@@ -238,7 +248,6 @@ class BackupService
 					echo $e->getMessage();
 				}
 
-		        // $this->esService->blockService()->bulkBlocks($_blocks);
 				echo "Total: " . $rowsCount .  PHP_EOL;
 		        @unlink($path);
 			} else {
@@ -246,7 +255,6 @@ class BackupService
 			}
 
 			$page++;
-			// exit();
 		}
 
 		@rmdir($this->folder);
@@ -258,22 +266,22 @@ class BackupService
 
 	private function _initFilename($fileName)
 	{
-		if (substr($fileName, 0, 2) !== './' && substr($fileName, 0, 1) !== '/') {
-		    $fileName = '/' . $fileName;
-		} else {
-		    $fileName = str_replace('./', '/', $fileName);
-		}
+		$this->fileName = getcwd() . '/' .$fileName;
+		$this->fileName = str_replace('/./', '/', $this->fileName);
+		$this->fileName = str_replace('.tar.gz', '', $this->fileName);
 
-		$this->fileName = $fileName;
+		$this->dzfile = $this->fileName . '.tar';
+		$this->gzName = $this->dzfile.'.gz';
 	}
 
 	private function _checkIfGzExists()
 	{
-		if (file_exists($this->destination . '.tar.gz')) {
+		if (file_exists($this->gzName)) {
 		    if ($this->force) {
 		        @unlink($this->gzName);
 		    } else {
-		        die("'{$this->gzName}' already exit" . PHP_EOL);
+		        @rmdir($this->folder);
+		        die(PHP_EOL . "Error => '{$this->gzName}' file already exists, use --force option to replace it." . PHP_EOL . PHP_EOL);
 		    }
 		}
 	}

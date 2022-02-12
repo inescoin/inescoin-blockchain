@@ -96,6 +96,7 @@ final class RpcServer
                             'height' => $lastBlock->getHeight(),
                             // 'topKnowHeight' => $this->node->getBlockchain()->getTopKnowHeight(),
                             'cumulativeDifficulty' => $lastBlock->getCumulativeDifficulty(),
+                            'totalDomains' => $this->blockchainManager->getDomain()->count(),
                             'totalTransfers' => $this->blockchainManager->getTransfer()->count(),
                             'totalTransactions' => $this->blockchainManager->getTransaction()->count(),
                             'bankAdresses' =>  $this->blockchainManager->getBank()->count(),
@@ -461,21 +462,42 @@ final class RpcServer
 
                         return new JsonResponse($response);
 
-                    // case 'get-website-info':
-                    //     $url = isset($data['url']) ? $data['url'] : null;
-                    //     if (null === $url) {
-                    //         return new JsonResponse([]);
-                    //     }
+                    case 'get-website-info':
+                        $url = isset($data['url']) ? $data['url'] : null;
+                        $page = isset($data['page']) ? (int) $data['page'] : 1;
 
-                    //     $response = $this->cache->getCache($key);
-                    //     if ($response) {
-                    //         return new JsonResponse($response);
-                    //     }
+                        if (null === $url || !ctype_alnum($url)) {
+                            return new Response(404);
+                        }
 
-                    //     $response = $this->blockchainManager->getDomain()->getDomainInfoByUrl($url);
+                        $response = $this->cache->getCache($key);
 
-                    //     $this->cache->setCache($key, $response);
-                    //     return new JsonResponse($response);
+                        if ($response) {
+                            return new JsonResponse($response);
+                        }
+
+                        $response = $this->blockchainManager->getDomain()->selectFisrtAsArray($url);
+                        $response['transactions'] = $this->blockchainManager
+                            ->getTransaction()
+                            ->selectHistory($url, $page);
+
+                        $this->cache->setCache($key, $response);
+                        return new JsonResponse($response);
+
+                    case 'get-last-domains':
+                        $domains = $this->cache->getCache($key);
+
+                        if ($domains) {
+                            return new JsonResponse($domains);
+                        }
+
+                        $domains = $this->blockchainManager->getDomain()->rangeAsArray(0, 20, 'height', 'desc');
+
+                        var_dump($domains);
+
+                        $this->cache->setCache($key, $domains);
+
+                        return new JsonResponse($domains);
 
                     case 'get-wallet-addresses-domain':
                         $page = isset($data['page']) ? (int) $data['page'] : 1;

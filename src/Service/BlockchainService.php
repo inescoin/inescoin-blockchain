@@ -123,19 +123,15 @@ class BlockchainService {
 	public function getNextDifficulty(){
         $blockInterval = 10;
 
-        var_dump("              > Check difficulty");
         $lastBlocks = $this->blockchainManager
         	->getBlock()
         	->range(0, $blockInterval, 'height', 'DESC');
 
         if (!isset($lastBlocks[0])) {
-            var_dump("              > lastBlock Not found");
             return BlockchainConfig::MIN_DIFFICULTY;
         }
 
         $lastBlock = $lastBlocks[0];
-
-        var_dump("              > Last Height:" . $lastBlock->getHeight());
 
         $count = count($lastBlocks);
         $adjutBlock = $lastBlocks[$count - 1];
@@ -145,13 +141,8 @@ class BlockchainService {
             $timeExpected = BlockchainConfig::BLOCK_TARGET * $count;
             $timeTaken = $lastBlock->getCreatedAt() - $adjutBlock->getCreatedAt();
 
-            var_dump("              > timeTaken: $timeTaken, timeExpected: $timeExpected ---------------");
-            var_dump("              > " . $timeTaken / $timeExpected * 100);
-
             $percent = 100 - (int) ($timeTaken / $timeExpected * 100);
             $delta = abs(floor($lastBlock->getDifficulty() * ($percent / 100) / 5));
-            var_dump("              > Percent: " . $percent);
-            var_dump("              > Delta: " . $delta);
 
             if ($percent < -10000) {
                 return BlockchainConfig::MIN_DIFFICULTY;
@@ -173,16 +164,8 @@ class BlockchainService {
     {
         $block = BlockHelper::generateGenesisBlock($this->prefix, $showGenensisAndExit);
 
-        if ($this->blockchainManager->getBlock()->exists($block->getHash(), 'hash')) {
-            var_dump("Genesis Block already exist :)");
-        } else {
-            $isDone = $this->addBlock($block, null, false);
-
-            if ($isDone) {
-                var_dump("Genesis Block Done !");
-            } else {
-                var_dump("Genesis Block Creation Error !");
-            }
+        if (!$this->blockchainManager->getBlock()->exists($block->getHash(), 'hash')) {
+            $this->addBlock($block, null, false);
         }
     }
 
@@ -252,7 +235,6 @@ class BlockchainService {
                 return true;
             }
 
-            var_dump('[Blockchain] Scan from ' . $fromBlockHeight . ' to ' . $toBlockHeight . ' on ' . $topBlockHeight . ' Blocks');
             $this->logger->info('[Blockchain] Scan from ' . $fromBlockHeight . ' to ' . $toBlockHeight . ' on ' . $topBlockHeight . ' Blocks');
 
             foreach ($blocks as $block) {

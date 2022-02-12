@@ -172,4 +172,15 @@ class WebsiteManager extends AbstractManager
 	{
 		return parent::delete($id, $idName);
 	}
+
+	/**
+	 * @param      mixed  	$id
+	 * @param      string  	$idName
+	 *
+	 * @return     int
+	 */
+	public function deleteLess(mixed $id, string $idName = self::PRIMARY_KEY): int
+	{
+		return parent::deleteLess($id, $idName);
+	}
 }

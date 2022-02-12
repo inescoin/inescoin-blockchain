@@ -26,6 +26,19 @@ class DomainManager extends AbstractManager
 	}
 
 	/**
+	 * @param      int     $offset
+	 * @param      int     $limit
+	 * @param      string  $orderBy
+	 * @param      string  $sortBy
+	 *
+	 * @return     array
+	 */
+	public function rangeAsArray(int $offset = 0, int $limit = 10, string $orderBy = 'height', string $sortBy = 'asc'): array
+	{
+		return parent::range($offset, $limit, $orderBy, $sortBy);
+	}
+
+	/**
 	 * @param      string  $sql    Query to execute
 	 *
 	 * @return     array
@@ -240,5 +253,16 @@ class DomainManager extends AbstractManager
 	public function delete(mixed $id, string $idName = self::PRIMARY_KEY): int
 	{
 		return parent::delete($id, $idName);
+	}
+
+	/**
+	 * @param      mixed  	$id
+	 * @param      string  	$idName
+	 *
+	 * @return     int
+	 */
+	public function deleteLess(mixed $id, string $idName = self::PRIMARY_KEY): int
+	{
+		return parent::deleteLess($id, $idName);
 	}
 }

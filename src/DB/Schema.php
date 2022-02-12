@@ -161,7 +161,7 @@ class Schema {
 			//'name' => 'text',
 			'nonce' => 'text',
 			'previousHash' => 'text',
-			// 'symbol' => 'text',
+			'hasDomain' => 'boolean',
 			//'status' => 'text'
 		],
 		'bank' => [
