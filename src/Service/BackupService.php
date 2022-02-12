@@ -177,7 +177,7 @@ class BackupService
 		    die("'{$this->gzName}' not found." . PHP_EOL);
 		}
 
-		$database = getcwd() . '/' .$this->prefix . '.dbi';
+		$database = getcwd() . '/' . $this->prefix . '.dbi';
 
 		if (file_exists($database)) {
 			if ($this->force) {
@@ -242,6 +242,7 @@ class BackupService
 				}
 
 				$rows = iterator_to_array(BlockHelper::bulkDecompress($blocks));
+
 				try {
 					$rowsCount += BlockHelper::extractBlock($rows, $this->prefix);
 				} catch (Exception $e) {
@@ -261,7 +262,13 @@ class BackupService
 
 		$endTime = microtime(true);
         $execTime = ($endTime - $this->executionTimeStart);
+
+        echo ''. PHP_EOL;
+        echo '---------------------------------------------------------------------'. PHP_EOL;
+        echo '   Created file -> ' . $database . PHP_EOL;
+        echo '---------------------------------------------------------------------'. PHP_EOL;
         echo '!! finish !! => Execution time: ' . $execTime .' sec' . PHP_EOL;
+        echo '---------------------------------------------------------------------'. PHP_EOL;
 	}
 
 	private function _initFilename($fileName)
