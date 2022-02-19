@@ -61,6 +61,7 @@ class BlockHelper
 
         $lastBlock = $blockchainManager->getBlock()->last();
         $lastBlockHeight = $blocks[0]->getHeight();
+        $topBlockHeight = $blocks[count($blocks) - 1]->getHeight();
 
         $previousBlock = !$resetMode
             ? $lastBlock
@@ -71,7 +72,15 @@ class BlockHelper
         }
 
         foreach ($blocks as $block) {
-            $blockModel = new BlockModel($block->getDataAsArray());
+            if ($block instanceof Block) {
+                $blockModel =  new BlockModel($block->getDataAsArray());
+            } elseif ($block instanceof BlockModel) {
+                $blockModel = $block;
+                $block = new Block($block->getInfos());
+            } else {
+                $blockModel = new BlockModel($block);
+                $block = new Block($block);
+            }
 
             if (null !== $previousBlock) {
                 if ($previousBlock->getHeight() === $block->getHeight()) {
@@ -387,7 +396,13 @@ class BlockHelper
                 }
             }
 
-            $blocksToSave[] = $block;
+            if ($block instanceof BlockModel) {
+                $blocksToSave[] = $block->getInfos();
+            } elseif ($block instanceof Block) {
+                $blocksToSave[] = $block->getDataAsArray();
+            } else {
+                $blocksToSave[] = $block;
+            }
         }
 
         if (!empty($transactionsList)) {
@@ -477,12 +492,20 @@ class BlockHelper
 
         $range = 100;
 
-        var_dump("LastBlockHeight => $lastBlockHeight *------- ");
-        while(!empty($blocks = $blockchainManager->getBlock()->range($lastBlockHeight - 1, $range, 'height', 'asc', ' WHERE hasDomain = 1 '))) {
-            var_dump(' ------* ' . count($blocks) . " | $lastBlockHeight *------- ");
+        // var_dump("LastBlockHeight => $lastBlockHeight *------- ");
+        // while(!empty($blocks = $blockchainManager->getBlock()->range($lastBlockHeight - 1, $range, 'height', 'asc', ' WHERE hasDomain = 1 '))) {
+        //     var_dump(' ------* ' . count($blocks) . " | $lastBlockHeight | $topBlockHeight *------- ");
 
-            $lastBlockHeight += $range;
-        }
+        //     foreach ($blocks as $block) {
+        //         $blockArray = self::cleanTodoFromBlock($block->getDataAsArray(), $topBlockHeight);
+
+        //         if (null !== $blockArray) {
+        //             $blockchainManager->getBlock()->update($blockArray['hash'], $blockArray);
+        //         }
+        //     }
+
+        //     $lastBlockHeight += $range;
+        // }
 
         return count($blocksToSave);
     }
@@ -908,26 +931,24 @@ class BlockHelper
 
     /**
      * @param      array   $blockArray
-     * @param      string  $transactionHash
+     * @param      int  $height
      *
-     * @return     array
+     * @return     ?array
      */
-    public static function cleanTodoFromBlock(array $blockArray, string $transactionHash): array
+    public static function cleanTodoFromBlock(array $blockArray, int $height = null): ?array
     {
-        if (!isset($transactionHash)) {
-            return $blockArray;
+        if (!isset($height)) {
+            return null;
         }
 
         $block = self::fromArrayToBlockModel($blockArray);
         $transactions = $block->getDataJson();
 
-
-        $transactionHash = $transactionHash;
-
+        $isUpdated = false;
         foreach ($transactions as $k => $transaction) {
-            if ($transaction['hash'] === $transactionHash) {
+            var_dump(array_keys($transaction));
                 $transactions[$k]['toDo'] = 'W10=';
-            }
+                $isUpdated = true;
 
             $transactions[$k]['transfers'] = base64_encode(json_encode($transactions[$k]['transfers']));
         }
@@ -938,7 +959,7 @@ class BlockHelper
             'data' => $transactions
         ]);
 
-        return $block->getInfos();
+        return $isUpdated ? $block->getInfos() : null;
     }
 
     // public function clean
@@ -979,7 +1000,9 @@ class BlockHelper
             $previousCumulativeDifficulty = $block['previousCumulativeDifficulty'];
         }
 
-        $countTotalTransaction = $block['previousBlockTotalTxCount'] + $totalTransaction;
+        $countTotalTransaction = isset($block['previousBlockTotalTxCount'])
+            ? $block['previousBlockTotalTxCount'] + $totalTransaction
+            : $totalTransaction;
 
         $selfBlock = new BlockModel([
             'height' => $height,

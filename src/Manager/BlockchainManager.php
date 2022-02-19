@@ -166,7 +166,7 @@ class BlockchainManager
         $this->transfer->dropTable();
         $this->transferPool->dropTable();
         $this->todo->dropTable();
-        $this->peer->dropTable();
+        // $this->peer->dropTable();
         $this->website->dropTable();
         $this->domain->dropTable();
         $this->message->dropTable();

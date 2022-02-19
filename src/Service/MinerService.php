@@ -38,6 +38,11 @@ final class MinerService
         $this->logger = (LoggerService::getInstance())->getLogger();
     }
 
+    public function getBlockchainService(): BlockchainService
+    {
+        return $this->blockchainService;
+    }
+
     public function getBlockTemplate($data)
     {
         if (!is_array($data)) {
@@ -175,12 +180,13 @@ final class MinerService
 
         $lastBlock = new Block($lastBlock->getDataAsArray());
         if (!$lastBlock || $lastBlock->isNextValid($block)) {
-            var_dump("[Miner] Block submitted ok, start blockchainService push...");
-            $this->logger->info("[Miner] Block submitted ok, start blockchainService push...");
             if ($this->getBlockchainService()->addBlock($block, $lastBlock)) {
-                $this->logger->info("[Miner] Done OK!");
+                var_dump("[Miner] Block submitted ok, start blockchainService push...");
+                $this->logger->info("[Miner] Block submitted ok, start blockchainService push...");
+
                 return [
-                    'done' => 'ok'
+                    'done' => 'ok',
+                    'block' => $block->getInfos()
                 ];
             }
         }
@@ -201,10 +207,5 @@ final class MinerService
     public function pushMessagePool($data)
     {
         return $this->blockchainService->pushMessage($data);
-    }
-
-    public function getBlockchainService(): BlockchainService
-    {
-        return $this->blockchainService;
     }
 }

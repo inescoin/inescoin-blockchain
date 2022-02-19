@@ -99,7 +99,7 @@ final class Node {
 
         if (!isset($transaction['error'])) {
             $this->logger->info('[Node] [pushMemoryPool] broadcast done!');
-            //$this->p2pServer->broadcastMemoryPool($data);
+            $this->p2pServer->broadcastMemoryPool($data);
         } else {
             $this->logger->info($transaction);
         }
@@ -139,5 +139,26 @@ final class Node {
         }
 
         return $response;
+    }
+
+    public function broadcastMinedBlock($block)
+    {
+        $this->logger->info("[Node] Broadcast mined block to peers strarted... ");
+        $this->p2pServer->broadcastMinedBlock($block);
+    }
+
+    public function getP2PServer()
+    {
+        return $this->p2pServer;
+    }
+
+    public function getLocalPeerConfig()
+    {
+        return $this->p2pServer->getLocalPeerConfig();
+    }
+
+    public function getPeersPersistence()
+    {
+        return $this->p2pServer->getPeersPersistence();
     }
 }

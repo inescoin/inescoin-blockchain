@@ -67,6 +67,11 @@ class PeerManager extends AbstractManager
 		return $peers;
 	}
 
+	public function getRemoteAddresses()
+	{
+		return parent::range(0, 10, 'lastSeen', 'desc');
+	}
+
 	/**
 	 * @param      string          $id
 	 * @param      string          $idName
@@ -120,7 +125,7 @@ class PeerManager extends AbstractManager
 	 *
 	 * @return     int
 	 */
-	protected function insert(array $data): int
+	public function insert(array $data): int
 	{
 		return parent::insert($data);
 	}

@@ -16,7 +16,6 @@ class Peer extends AbstractEntity
 	protected $lastSeen; // 'lastSeen' => 'integer',
 	protected $peersInputStream; // 'peersInputStream' => 'integer',
 	protected $peersOutputStream; // 'peersOutputStream' => 'integer',
-	protected $peersInputStream; // 'peersInputStream' => 'integer',
 	protected $peersCount; // 'peersCount' => 'integer'
 
     public function __construct(array $data = [])
@@ -260,26 +259,6 @@ class Peer extends AbstractEntity
     public function setPeersOutputStream($peersOutputStream)
     {
         $this->peersOutputStream = $peersOutputStream;
-
-        return $this;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getPeersInputStream()
-    {
-        return $this->peersInputStream;
-    }
-
-    /**
-     * @param mixed $peersInputStream
-     *
-     * @return self
-     */
-    public function setPeersInputStream($peersInputStream)
-    {
-        $this->peersInputStream = $peersInputStream;
 
         return $this;
     }

@@ -2,7 +2,7 @@
 <?php
 
 require __DIR__ . '/../vendor/autoload.php';
-
+require __DIR__ . '/../src/help.php';
 
 use Inescoin\BlockchainConfig;
 use Inescoin\Helper\ZeroPrefix;
@@ -59,7 +59,7 @@ if ($helpMe) {
 $peersConfig = [
 	[
 		'host' => '0.0.0.0',
-		'port' => 3031
+		'port' => 3030
 	],
 ];
 
@@ -80,14 +80,14 @@ $connector = new Connector($loop, [
 $inesCoin = BlockchainService::getInstance($prefix, $dataFolder, $resetMode, $shownGenesisHash);
 $minerService = new MinerService($inesCoin, new ZeroPrefix());
 
-$p2pServer =  new P2PServer($connector);
+$p2pServer =  new P2PServer($connector, $network);
 
 $node = new Node(
 	$minerService,
 	$p2pServer
 );
 
-$p2pServer->attachNode($node);
+$p2pServer->attachNode($node, $peersConfig, $localPeerConfig);
 
 $socketP2pServer = new SocketServer("$p2pBindIp:$p2pBindPort" , $loop);
 $socketP2pServer->on('connection', $p2pServer);

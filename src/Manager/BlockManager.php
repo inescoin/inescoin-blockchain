@@ -3,6 +3,7 @@
 namespace Inescoin\Manager;
 
 use Inescoin\Entity\Block;
+use Inescoin\Helper\BlockHelper;
 use Inescoin\Model\Block as BlockModel;
 use Inescoin\Service\SQLiteService;
 
@@ -68,6 +69,21 @@ class BlockManager extends AbstractManager
 		if (!empty($blocksResult)) {
 			foreach ($blocksResult as $block) {
 				$blocks[] = (new BlockModel($block))->getJsonInfos();
+			}
+		}
+
+		return $blocks;
+	}
+
+	public function getCompressed(int $offset = 0, int $limit = 10, string $orderBy = 'height', string $sortBy = 'asc')
+	{
+		$blocksResult = parent::range($offset, $limit, $orderBy, $sortBy);
+
+		$blocks = [];
+
+		if (!empty($blocksResult)) {
+			foreach ($blocksResult as $block) {
+				$blocks[] = BlockHelper::compress($block) ;
 			}
 		}
 
@@ -150,7 +166,13 @@ class BlockManager extends AbstractManager
 		$data = [];
 
 		foreach ($blocks as $block) {
-			$data[] = $block->getDataAsArray();
+			if ($block instanceof Block) {
+                $data[] = $block->getInfos();
+            } elseif ($block instanceof BlockModel) {
+                $data[] = $block->getDataAsArray();
+            } else {
+                $data[] = $block;
+            }
 		}
 
 		return $this->bulk($data);
@@ -201,7 +223,7 @@ class BlockManager extends AbstractManager
 	 *
 	 * @return     int
 	 */
-	protected function update(mixed $id, array $data, string $idName = self::PRIMARY_KEY): int
+	public function update(mixed $id, array $data, string $idName = self::PRIMARY_KEY): int
 	{
 		if (isset($data[self::PRIMARY_KEY])) {
 			unset($data[self::PRIMARY_KEY]);

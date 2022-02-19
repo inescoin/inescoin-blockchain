@@ -102,9 +102,9 @@ final class RpcServer
                             'bankAdresses' =>  $this->blockchainManager->getBank()->count(),
                             'bankAmount' =>  $this->blockchainManager->getBank()->amount(),
                             'bankValid' =>  $this->blockchainManager->getBank()->isValid(),
-                            // 'localPeerConfig' => $this->node->getLocalPeerConfig(),
+                            'localPeerConfig' => $this->node->getLocalPeerConfig(),
+                            'peersPersistence' => $this->node->getPeersPersistence(),
                             // 'isSync' => $this->node->getBlockchain()->isSync(),
-                            // 'peersPersistence' => $this->node->getPeersPersistence(),
                             // 'peers' => $this->node->getPeers(),
                         ];
 
@@ -542,9 +542,9 @@ final class RpcServer
                     case 'submit-block-hash':
                         $response = $this->node->submitBlockHash($data);
 
-                        // if (isset($response['done'])) {
-                        //     $this->node->broadcastMinedBlock();
-                        // }
+                        if (isset($response['done'])) {
+                            $this->node->broadcastMinedBlock($response['block']);
+                        }
 
                         return new JsonResponse([$response]);
 

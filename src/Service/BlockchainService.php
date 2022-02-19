@@ -63,6 +63,16 @@ class BlockchainService {
      */
     private ?int $lastTransactionPool = null;
 
+    /**
+     * @var ?int
+     */
+    private ?int $topKnowHeight = 0;
+
+    /**
+     * @var ?int
+     */
+    private ?int $topCumulativeDifficulty = 0;
+
 	/**
 	 * @param ?string $prefix         			Prefixed blockchain name
 	 * @param ?string $pathToBlockDirectory 	Path to database directory
@@ -114,6 +124,11 @@ class BlockchainService {
 	{
 		return $this->pathToBlockDirectory;
 	}
+
+    public function getLastBlock()
+    {
+        return $this->blockchainManager->getBlock()->lastAsArray();
+    }
 
 	public function getBlockchainManager(): BlockchainManager
 	{
@@ -548,5 +563,33 @@ class BlockchainService {
 
         $this->blockchainManager->getTransferPool()->deleteOldTransactions($transactionsToRemove);
         $this->blockchainManager->getTransactionPool()->deleteOldTransactions($transactionsToRemove);
+    }
+
+    public function getTopHeight() {
+        return (int) $this->blockchainManager->getBlock()->last()->getHeight();
+    }
+
+    public function getTopKnowHeight() {
+        return $this->topKnowHeight;
+    }
+
+    public function getTopCumulativeDifficulty() {
+        return (int) $this->blockchainManager->getBlock()->last()->getCumulativeDifficulty();
+    }
+
+    public function setTopKnowHeight(int $height): self
+    {
+        $topHeight = $this->getTopHeight();
+        $this->topKnowHeight = $height > $topHeight ? $height : $topHeight;
+
+        return $this;
+    }
+
+    public function setTopCumulativeDifficulty(int $difficulty): self
+    {
+        $topCumulativeDifficulty = $this->getTopCumulativeDifficulty();
+        $this->topCumulativeDifficulty = $difficulty > $topCumulativeDifficulty ? $difficulty : $topCumulativeDifficulty;
+
+        return $this;
     }
 }
