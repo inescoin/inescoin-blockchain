@@ -12,7 +12,7 @@ use React\Socket\Connector;
 
 class P2PServer {
 
-	private $node;
+    private $node;
 
     private $connector;
 
@@ -41,7 +41,7 @@ class P2PServer {
 
     private $transferLimit = 50;
 
-	public function __construct(Connector $connector, $network = 'MAINNET')
+    public function __construct(Connector $connector, $network = 'MAINNET')
     {
         $this->keys = PKI::newEcKeys();
 
@@ -51,7 +51,7 @@ class P2PServer {
             : Packet::NETWORK_TESTNET;
     }
 
-	public function __invoke(ConnectionInterface $connection): void
+    public function __invoke(ConnectionInterface $connection): void
     {
         if (!$this->_canConnect()) {
             $connection->close();
@@ -137,7 +137,7 @@ class P2PServer {
             }
 
             if (count($this->peers) + count($this->peersPersistence) == 0) {
-                //$this->restartNode();
+                $this->restartNode();
             }
         });
     }
@@ -661,6 +661,7 @@ class P2PServer {
                 if (BlockHelper::extractBlock($blocks, $this->node->getBlockchainService()->getPrefix())) {
                     if ($this->node->getBlockchainService()->getTopKnowHeight() === $lastHeight) {
                         $this->_startPersitencePeers($remoteAddress, $connection);
+                        $this->restartNode();
                     } else {
                         if (isset($this->peers[$remoteAddress])) {
                             $this->peers[$remoteAddress]
@@ -947,6 +948,7 @@ class P2PServer {
             'topCumulativeDifficulty' => $this->node->getBlockchainService()->getTopCumulativeDifficulty(),
             'peersOutputStream' => count($this->peersOutputStream),
             'peersInputStream' => count($this->peersInputStream),
+            'timestamp' => (new \DateTimeImmutable())->getTimestamp()
         ];
     }
 
