@@ -35,11 +35,12 @@ class P2PServer {
     private $peersOutputStream = [];
     private $peersKeysOutputStream = [];
 
-    private $limitConnectedPeers = 9;
+    private $limitConnectedPeers = 3;
+    private $limitConnectedPeerPersistance = 3;
 
     private $isSynced = false;
 
-    private $transferLimit = 50;
+    private $transferLimit = 1000;
 
     public function __construct(Connector $connector, $network = 'MAINNET')
     {
@@ -59,10 +60,6 @@ class P2PServer {
         }
 
         $connection->on('data', function (string $data) use ($connection): void {
-
-            // var_dump('-------------------------------------');
-            // var_dump('-------------- data -----------------');
-            // var_dump('-------------------------------------');
 
             $packet = new Packet($data);
 
@@ -93,10 +90,6 @@ class P2PServer {
                         $this->handlePeerBlockSyncResponse($packet, $connection);
                         break;
 
-                    // case Packet::BROADCAST_FOR_PERSISTENCE:
-                    //     $this->handleBroadcastForPersistence($packet, $connection);
-                    //     break;
-
                     case Packet::BROADCAST_TOP_BLOCK:
                         $this->handleBroadcastTopBlock($packet, $connection);
                         break;
@@ -118,13 +111,9 @@ class P2PServer {
                 }
             } else {
                 $connection->close();
+                return;
             }
-
-            // if (!$connection->getRemoteAddress()) {
-            //     $connection->close();
-            // }
         });
-
 
         $connection->on('close', function () use ($connection): void {
             var_dump('Connection closed: ' . $connection->getRemoteAddress());
@@ -137,6 +126,7 @@ class P2PServer {
             }
 
             if (count($this->peers) + count($this->peersPersistence) == 0) {
+                sleep(10);
                 $this->restartNode();
             }
         });
@@ -194,6 +184,11 @@ class P2PServer {
             return;
         }
 
+        if (isset($this->peersPersistence[$remoteAddress])) {
+            var_dump($remoteAddress . ' already in peers');
+            return;
+        }
+
         if (count($this->peers) >= $this->limitConnectedPeers) {
             var_dump($remoteAddress . ' limitConnectedPeers execeded');
             return;
@@ -202,11 +197,6 @@ class P2PServer {
         $CI = $this;
         $cf = function (ConnectionInterface $connection) use ($host, $port, $CI)   {
             $remoteAddress = $connection->getRemoteAddress();
-
-            // if (isset($CI->peers[$remoteAddress])) {
-            //     $connection->close();
-            //     return;
-            // }
 
             $this($connection);
 
@@ -232,103 +222,6 @@ class P2PServer {
 
         $this->connector->connect(sprintf('%s:%s', $host, $port))->then($cf);
     }
-
-    // public function connectForSynchro($peer): void
-    // {
-    //     var_dump('---------------- connectForSynchro ---------------------');
-
-    //     if (isset($this->peers[$peer['host'].':'. $peer['port']])) {
-    //         return;
-    //     }
-
-    //     if (!$this->_canConnect()) {
-    //         return;
-    //     }
-
-    //     $CI = $this;
-    //     $cf = function (ConnectionInterface $connection) use ($peer, $CI): void   {
-    //         $remoteAddress = $connection->getRemoteAddress();
-
-    //         if ($CI->localpeerconfig['host'] === $peer['host'] && $CI->localpeerconfig['port'] === $peer['port']) {
-    //             $connection->close();
-    //             return;
-    //         }
-
-    //         if (isset($CI->peers[$remoteAddress])) {
-    //             $connection->close();
-    //             return;
-    //         }
-
-    //         $this($connection);
-
-    //         $CI->peers[$remoteAddress] = new Peer($connection);
-    //         $CI->peers[$remoteAddress]->setPublicKey($peer['publicKey']);
-
-    //         $CI->peers[$remoteAddress]->setLocalConfig($peer['host'].':'. $peer['port']);
-
-    //         $CI->peers[$remoteAddress]
-    //             ->send(Packet::prepare(
-    //                 $CI->network,
-    //                 Packet::REQUEST_PEER_BLOCK_SYNC,
-    //                 $CI->getHelloMoonMessage(),
-    //                 $CI->getPublicKey()
-    //             ));
-    //     };
-
-    //     $cf->bindTo($this, $this);
-
-    //     $this->connector->connect(sprintf('%s:%s', $peer['host'], $peer['port']))->then($cf);
-    // }
-
-    // public function connectForPersistence($peer): void
-    // {
-    //     var_dump('---------------- connectForPersistence ---------------------');
-
-    //     if (isset($this->peersPersistence[$peer['host'].':'. $peer['port']])) {
-    //         return;
-    //     }
-
-    //     if (!$this->_canConnectPersistence()) {
-    //         return;
-    //     }
-
-    //     $CI = $this;
-    //     $cf = function (ConnectionInterface $connection) use ($peer, $CI): void   {
-    //         $remoteAddress = $connection->getRemoteAddress();
-
-    //         if ($CI->localpeerconfig['host'] === $peer['host'] && $CI->localpeerconfig['port'] === $peer['port']) {
-    //             $connection->close();
-    //             return;
-    //         }
-
-    //         if (isset($CI->peersPersistence[$remoteAddress])) {
-    //             $connection->close();
-    //             return;
-    //         }
-
-    //         $this($connection);
-
-    //         if (isset($this->peers[$remoteAddress])) {
-    //             unset($this->peers[$remoteAddress]);
-    //         }
-
-    //         $CI->peersPersistence[$remoteAddress] = new Peer($connection);
-    //         $CI->peersPersistence[$remoteAddress]->setPublicKey($peer['publicKey']);
-    //         $CI->peersPersistence[$remoteAddress]->setLocalConfig($peer['host'].':'. $peer['port']);
-
-    //         $CI->peersPersistence[$remoteAddress]
-    //             ->send(Packet::prepare(
-    //                 $this->network,
-    //                 Packet::BROADCAST_FOR_PERSISTENCE,
-    //                 $this->getHelloMoonMessage(),
-    //                 $this->getPublicKey()
-    //             ));
-    //     };
-
-    //     $cf->bindTo($this, $this);
-
-    //     $this->connector->connect(sprintf('%s:%s', $peer['host'], $peer['port']))->then($cf);
-    // }
 
     public function handleHelloMoon($packet, ConnectionInterface $connection)
     {
@@ -398,6 +291,7 @@ class P2PServer {
                 $this->write($connection, Packet::REQUEST_PEERS_RESPONSE, $data);
             } else {
                 $connection->close();
+                return;
             }
 
             $this->peersInputStream[$remoteAddress] = [];
@@ -434,6 +328,7 @@ class P2PServer {
                 ]);
             } else {
                 $connection->close();
+                return;
             }
 
             $this->peersInputStream[$remoteAddress] = [];
@@ -479,7 +374,7 @@ class P2PServer {
                 $this->_startBlockchainSynchro($connection);
             }
 
-            unset($this->peersInputStream[$remoteAddress]);
+            $this->peersInputStream[$remoteAddress] = [];
 
         } else if($packet->isFirst()) {
             var_dump('P2pServer::handlePeerListResponse -> isFirst');
@@ -506,11 +401,8 @@ class P2PServer {
 
             if ($decrypted) {
                 foreach ($decrypted['peers'] as $index => $peer) {
-                    // $this->node->getBlockchainService()->es->peerService()->index($index, $peer);
                     $this->savePeer($peer);
                 }
-
-                // $connection->close();
 
                 $this->_startBlockchainSynchro($connection);
             }
@@ -546,7 +438,7 @@ class P2PServer {
             $this->initPeer($connection, $peerInfo);
         }
 
-        if (!array_key_exists('height', $peerInfo)) {
+        if (!is_array($peerInfo) || !array_key_exists('height', $peerInfo)) {
             $connection->close();
             return;
         }
@@ -618,6 +510,7 @@ class P2PServer {
                         ));
                 } else {
                     $connection->close();
+                    return;
                 }
 
                 if (isset($this->peers[$remoteAddress])) {
@@ -626,7 +519,6 @@ class P2PServer {
             }
 
             $this->peersInputStream[$remoteAddress] = [];
-
         } else if($packet->isFirst()) {
             $this->peersInputStream[$remoteAddress] = [];
             $this->peersInputStream[$remoteAddress][] = $packet;
@@ -639,6 +531,7 @@ class P2PServer {
             ));
         } else if($packet->isLast()) {
             $buffer = '';
+
             foreach ($this->peersInputStream[$remoteAddress] as $packetCache) {
                 $buffer .= $packetCache->getBody();
             }
@@ -650,6 +543,7 @@ class P2PServer {
             if ($decrypted) {
                 $blocks = [];
                 $lastHeight = 0;
+
                 foreach ($decrypted['blocks'] as $tmpBlock) {
                     if ($newBlock = BlockHelper::decompress($tmpBlock)) {
                         $blocks[] = BlockHelper::fromArrayToBlockModel($newBlock);
@@ -681,12 +575,16 @@ class P2PServer {
                                 ));
                         } else {
                             $connection->close();
+                            return;
                         }
 
-                        $this->peers[$remoteAddress]->setTopHeight($blocks[count($blocks) - 1]->getHeight());
+                        if (isset($this->peers[$remoteAddress])) {
+                            $this->peers[$remoteAddress]->setTopHeight($blocks[count($blocks) - 1]->getHeight());
+                        }
                     }
                 } else {
                     $connection->close();
+                    return;
                 }
             } else {
                 $connection->write(Packet::prepare(
@@ -713,43 +611,6 @@ class P2PServer {
         }
     }
 
-    // public function handleBroadcastForPersistence($packet, ConnectionInterface $connection)
-    // {
-    //     var_dump('---------------- handleBroadcastForPersistence ---------------------');
-
-    //     $remoteAddress = $connection->getRemoteAddress();
-
-    //     if (isset($this->peersOutputStream[$remoteAddress]) && !empty($this->peersOutputStream[$remoteAddress])) {
-    //         $this->write($connection, Packet::REQUEST_PEER_BLOCK_SYNC_RESPONSE, []);
-    //         return;
-    //     }
-
-    //     $peerInfo = $packet->getBody();
-
-    //     if (!empty($peerInfo)) {
-    //         // $this->node->getBlockchainService()->es->peerService()->save($peerInfo);
-    //         $this->savePeer($peerInfo);
-    //         $this->initPeer($connection, $peerInfo);
-    //     }
-
-    //     // $connection->close();
-
-    //     $blockHeight = (int) $peerInfo['height'] + 1;
-
-    //     $topHeight = $this->node->getBlockchainService()->getTopHeight();
-
-    //     if ($blockHeight === $topHeight) {
-    //         var_dump('[P2PServer::handleBroadcastForPersistence] [Sync:Ok] : peer[' . $remoteAddress . '] height at ' . $peerInfo['height'] . ' | local height at '.$topHeight);
-    //     } else if ($blockHeight > $topHeight) {
-    //         $connection->write(Packet::prepare(
-    //             $this->network,
-    //             Packet::REQUEST_PEER_BLOCK_SYNC,
-    //             $this->getHelloMoonMessage(),
-    //             $this->getPublicKey()
-    //         ));
-    //     }
-    // }
-
     public function handleBroadcastTopBlock($packet, ConnectionInterface $connection)
     {
         var_dump('---------------- handleBroadcastTopBlock ---------------------');
@@ -762,7 +623,6 @@ class P2PServer {
         }
 
         if ($packet->onlyOne()) {
-
             $body = $packet->getBody();
             $decrypted = $this->decrypt($body, $packet->getPublicKey());
 
@@ -781,13 +641,13 @@ class P2PServer {
                         $this->getHelloMoonMessage(),
                         $this->getPublicKey()
                     ));
+                } else {
+                    $this->broadcastMinedBlock($newBlock);
                 }
             }
 
             $this->peersPersitenceInputStream[$remoteAddress] = [];
-
         } else if($packet->isFirst()) {
-
             $this->peersPersitenceInputStream[$remoteAddress] = [];
             $this->peersPersitenceInputStream[$remoteAddress][] = $packet;
 
@@ -797,9 +657,7 @@ class P2PServer {
                 [],
                 $this->getPublicKey()
             ));
-
         } else if($packet->isLast()) {
-
             $buffer = '';
             foreach ($this->peersPersitenceInputStream[$remoteAddress] as $packetCache) {
                 $buffer .= $packetCache->getBody();
@@ -826,10 +684,12 @@ class P2PServer {
                         $this->getHelloMoonMessage(),
                         $this->getPublicKey()
                     ));
+                } else {
+                    $this->broadcastMinedBlock($newBlock);
                 }
             }
 
-            $this->peersPersitenceInputStream[$remoteAddress] = [];
+            unset($this->peersPersitenceInputStream[$remoteAddress]);
         } else {
             $this->peersPersitenceInputStream[$remoteAddress][] = $packet;
             $connection->write(Packet::prepare(
@@ -845,7 +705,7 @@ class P2PServer {
     {
         var_dump('---------------- handleBroadcastTopBlockResponse ---------------------');
 
-        $remoteAddress = $connection->getRemoteAddress();
+        // $remoteAddress = $connection->getRemoteAddress();
 
         if (isset($this->peersOutputStream[$remoteAddress]) && !empty($this->peersOutputStream[$remoteAddress])) {
             $this->write($connection, Packet::BROADCAST_TOP_BLOCK, []);
@@ -917,6 +777,19 @@ class P2PServer {
         return $peers;
     }
 
+    public function getPeersPersistencePublicKey(): array
+    {
+        $peers = [];
+
+        foreach ($this->peersPersistence as $peer) {
+            if (!in_array($peer->getPublicKey(), $peers)) {
+                $peers[] = $peer->getPublicKey();
+            }
+        }
+
+        return $peers;
+    }
+
     public function getPublicKey() {
         return $this->keys['publicKey'];
     }
@@ -943,6 +816,7 @@ class P2PServer {
             'rpcPort' => $this->localpeerconfig['rpcPort'],
             'peersCount' => count($this->peers),
             'peersPersistence' => $this->getPeersPersistence(),
+            'peersPersistencePublicKey' => $this->getPeersPersistencePublicKey(),
             'peers' => $this->getPeers(),
             'lastSeen' => (new \DateTimeImmutable())->getTimestamp(),
             'topCumulativeDifficulty' => $this->node->getBlockchainService()->getTopCumulativeDifficulty(),
@@ -954,6 +828,10 @@ class P2PServer {
 
     public function broadcastMinedBlock($block)
     {
+        if (0 === count($this->peersPersistence)) {
+            $this->restartNode();
+        }
+
         $blocks = [BlockHelper::compress($block)];
 
         var_dump(' ---------------------------- ' . count($this->peersPersistence) . ' ----------------------------');
@@ -1031,6 +909,8 @@ class P2PServer {
 
         if (!isset($this->{$group}[$remoteAddress])) {
             $connection->close();
+            return;
+
         }
 
         if (empty($remoteAddress) && !isset($this->{$property}[$remoteAddress]) || empty($this->{$property}[$remoteAddress])) {
@@ -1164,13 +1044,6 @@ class P2PServer {
             ));
 
         $this->switchPeerToPersistence($connection);
-        //$this->closeAllConnections();
-
-        // $peersToConnect = $this->node->getBlockchainService()->getBlockchainManager()->getPeer()->getRemoteAddresses();
-
-        // foreach ($peersToConnect as $peer) {
-        //     $this->connectForPersistence($peer);
-        // }
     }
 
     private function _toPosition(int $position)
@@ -1206,7 +1079,7 @@ class P2PServer {
 
     private function _canConnectPersistence()
     {
-        if (count($this->peersPersistence) >= $this->limitConnectedPeers){
+        if (count($this->peersPersistence) >= $this->limitConnectedPeerPersistance){
             return false;
         }
 
@@ -1232,20 +1105,41 @@ class P2PServer {
 
     private function switchPeerToPersistence($connection)
     {
+        if (!$this->_canConnectPersistence()) {
+            var_dump('[P2PServer::_startPersitencePeers] [Sync:Ok] Close');
+            $connection->close();
+            return;
+        }
+
         if (isset($this->peers[$connection->getRemoteAddress()])) {
-            $this->peersPersistence[$connection->getRemoteAddress()] = $this->peers[$connection->getRemoteAddress()];
+            $countSameConnectedPeers = 0;
+            foreach($this->peers[$connection->getRemoteAddress()]->getData()['peersPersistencePublicKey'] as $peerPersistencePublicKey) {
+                if (in_array($peerPersistencePublicKey, $this->getPeersPersistencePublicKey())) {
+                    $countSameConnectedPeers++;
+                }
+            }
+
+            // var_dump("----------------------> $countSameConnectedPeers <----------------------");
+            // var_dump("----------------------> " . count($this->peers) . " <----------------------");
+            // var_dump("----------------------> " . count($this->peersPersistence) . " <----------------------");
+
+            if ($countSameConnectedPeers < 2) {
+                $this->peersPersistence[$connection->getRemoteAddress()] = $this->peers[$connection->getRemoteAddress()];
+            } else {
+                $connection->close();
+            }
+
             unset($this->peers[$connection->getRemoteAddress()]);
         }
     }
 
     private function initPeer($connection, $peerInfo)
     {
-
-
         $this->peers[$connection->getRemoteAddress()] = new Peer($connection);
         $this->peers[$connection->getRemoteAddress()]->setPublicKey($peerInfo['publicKey']);
         $this->peers[$connection->getRemoteAddress()]->setLocalConfig($peerInfo['host'] . ':' . $peerInfo['port']);
         $this->peers[$connection->getRemoteAddress()]->setTopHeight($peerInfo['height']);
+        $this->peers[$connection->getRemoteAddress()]->setData($peerInfo);
 
         $this->node->getBlockchainService()->setTopKnowHeight($peerInfo['topHeight']);
     }

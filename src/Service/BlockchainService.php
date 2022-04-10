@@ -13,6 +13,7 @@ use Inescoin\Helper\TransactionHelper;
 use Inescoin\Manager\BlockchainManager;
 use Inescoin\Model\Block as BlockModel;
 use Inescoin\Model\Transaction;
+use Inescoin\Model\Message;
 use Inescoin\Service\LoggerService;
 use Psr\Log\LoggerInterface;
 
@@ -472,6 +473,51 @@ class BlockchainService {
         }
 
         return $mTransaction;
+    }
+
+    public function pushMessage($data)
+    {
+        $data = (array) $data;
+        var_dump($data);
+
+        $wallet = $this->blockchainManager->getBank()->getAddressBalances([$data['fromWalletId'], $data['toWalletId']]);
+
+        if (!isset($wallet[$data['fromWalletId']])) {
+            return [
+                'error' => 'Wallet address sender not found'
+            ];
+        }
+
+        if (!isset($wallet[$data['toWalletId']])) {
+            return [
+                'error' => 'Wallet address receiver not found'
+            ];
+        }
+
+        $message = new Message();
+        $message->setData($data);
+
+        $messagePoolExists = $this->blockchainManager->getMessage()->exists($message->getMessage(), 'hash');
+        var_dump($messagePoolExists);
+
+        if ($messagePoolExists) {
+            return false;
+        }
+
+        $mMessage = $message->getInfos();
+
+        var_dump($message->isValid());
+        if ($message->isValid()) {
+            $mMessage = $message->getInfos();
+            $mMessage['hash'] = $message->getMessage();
+            $this->blockchainManager->getMessage()->insert($mMessage);
+
+            var_dump($message->getInfos());
+
+            return $message->getInfos();
+        }
+
+        return false;
     }
 
     public function getDataPool() {

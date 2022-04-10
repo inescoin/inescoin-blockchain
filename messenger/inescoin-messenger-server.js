@@ -38,9 +38,11 @@ function spawnMessengerWorkers(){
           workerType: 'messenger',
           forkId: forkId
       });
+
       worker.forkId = forkId;
       worker.type = 'messenger';
       messengerWorkers[forkId] = worker;
+
       worker.on('exit', function(code, signal){
           log('error', logSystem, 'Messenger fork %s died, spawning replacement worker...', [forkId]);
           setTimeout(function(){
@@ -66,6 +68,8 @@ function spawnMessengerWorkers(){
         if (i - 1 === numForks){
             clearInterval(spawnInterval);
             log('info', logSystem, 'Messenger spawned on %d thread(s)', [numForks]);
+
+            console.log('Messenger spawned on ' + numForks + ' thread(s)');
         }
     }, 10);
 }

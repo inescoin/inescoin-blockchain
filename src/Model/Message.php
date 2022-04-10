@@ -15,8 +15,8 @@ use DateTimeImmutable;
 
 class Message {
 
-	private $from = '';
-	private $to = '';
+	private $fromWalletId = '';
+	private $toWalletId = '';
 	private $message = '';
 	private $signature = '';
 	private $publicKey = '';
@@ -51,8 +51,8 @@ class Message {
 
         return Pow::hash(
         	$this->configHash
-        	. $this->from
-        	. $this->to
+        	. $this->fromWalletId
+        	. $this->toWalletId
         	. $this->message
         	. $createdAt
         );
@@ -60,12 +60,12 @@ class Message {
 
 	public function getFrom()
 	{
-		return $this->from;
+		return $this->fromWalletId;
 	}
 
 	public function getTo()
 	{
-		return $this->to;
+		return $this->toWalletId;
 	}
 
 	public function getPublicKey()
@@ -85,8 +85,8 @@ class Message {
 
 	public function getData() {
 		return [
-			'from' => $this->from,
-			'to' => $this->to,
+			'fromWalletId' => $this->fromWalletId,
+			'toWalletId' => $this->toWalletId,
 			'message' => $this->message,
 			'publicKey' => $this->publicKey,
 			'signature' => $this->signature,
@@ -95,8 +95,8 @@ class Message {
 
 	public function getDataDecrypted() {
 		return [
-			'from' => $this->from,
-			'to' => $this->to,
+			'fromWalletId' => $this->fromWalletId,
+			'toWalletId' => $this->toWalletId,
 			'message' => base64_decode($this->message),
 			'publicKey' => $this->publicKey,
 			'signature' => $this->signature,
@@ -108,8 +108,8 @@ class Message {
 			return $this;
 		}
 
-		$this->from = isset($data['from']) ? (string) $data['from'] : $this->from;
-		$this->to = isset($data['to']) ? (string) $data['to'] : $this->to;
+		$this->fromWalletId = isset($data['fromWalletId']) ? (string) $data['fromWalletId'] : $this->fromWalletId;
+		$this->toWalletId = isset($data['toWalletId']) ? (string) $data['toWalletId'] : $this->toWalletId;
 		$this->publicKey = isset($data['publicKey']) ? (string) $data['publicKey'] : $this->publicKey;
 		$this->message = isset($data['message']) ? (string) $data['message'] : $this->message;
 
@@ -131,8 +131,8 @@ class Message {
 	public function setData($data) {
 		$data = is_object($data) ? (array) $data : $data;
 
-		$this->from = isset($data['from']) ? (string) $data['from'] : $this->from;
-		$this->to = isset($data['to']) ? (string) $data['to'] : $this->to;
+		$this->fromWalletId = isset($data['fromWalletId']) ? (string) $data['fromWalletId'] : $this->fromWalletId;
+		$this->toWalletId = isset($data['toWalletId']) ? (string) $data['toWalletId'] : $this->toWalletId;
 		$this->message = isset($data['message']) ? (string) $data['message'] : $this->message;
 		$this->publicKey = isset($data['publicKey']) ? (string) $data['publicKey'] : $this->publicKey;
 
@@ -152,8 +152,8 @@ class Message {
 	}
 
 	public function imNotEmpty() {
-		return !empty($this->from)
-			&& !empty($this->to)
+		return !empty($this->fromWalletId)
+			&& !empty($this->toWalletId)
 			&& !empty($this->message)
 			&& !empty($this->publicKey)
 			&& !empty($this->createdAt)
@@ -162,9 +162,9 @@ class Message {
 
 	public function getInfos() {
 		return [
-			'from' => $this->from,
+			'fromWalletId' => $this->fromWalletId,
 			// 'hash' => $this->hash,
-			'to' => $this->to,
+			'toWalletId' => $this->toWalletId,
 			'message' => $this->message,
 			'publicKey' => $this->publicKey,
 			'createdAt' => $this->createdAt,

@@ -107,6 +107,32 @@ final class Node {
         return $transaction;
     }
 
+    public function pushMemoryMessagePool($data)
+    {
+        $this->logger->info('[Node] [pushMemoryMessagePool] broadcast start...');
+        $message = $this->miner->pushMessagePool($data);
+
+        if (!isset($message['error'])) {
+            $this->logger->info('[Node] [pushMemoryMessagePool] broadcast done!');
+            $this->p2pServer->broadcastMemoryMessagePool($data);
+        } else {
+            $this->logger->info('[Node] ' . $message);
+        }
+
+        // return [];
+        return $message;
+    }
+
+    public function checkFromMessagePool($data) {
+        $response = $this->_checkFrom($data);
+
+        if (isset($response['broadcasted']) && isset($response['data'])) {
+            $response['data'] = $this->pushMemoryMessagePool($response['data']);
+        }
+
+        return $response;
+    }
+
     private function _checkFrom($data)
     {
         $response['error'] = 500;

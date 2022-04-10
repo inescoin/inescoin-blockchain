@@ -8,7 +8,7 @@ use Inescoin\Service\SQLiteService;
 class MessageManager extends AbstractManager
 {
 	protected $tableName = 'message';
-	const PRIMARY_KEY = 'address';
+	const PRIMARY_KEY = 'fromWalletId';
 
 	public function __construct($database = null) {
 		parent::__construct($database);
@@ -33,6 +33,50 @@ class MessageManager extends AbstractManager
 	public function query(string $sql = ''): array
 	{
 		return parent::query($sql);
+	}
+
+	/**
+	 * @param      mixed        $addresses
+	 * @param      int  		$page
+	 * @param      int          $size
+	 *
+	 * @return     Transfer[]
+	 */
+	public function selectHistory(mixed $addresses, int $page = 1, int $size = 500): array
+	{
+		$from = 0;
+		if ($page > 1) {
+			$from = ((int) $page * $size - 1) - $size;
+		}
+
+		if (is_string($addresses)) {
+			$addresses = [$addresses];
+		}
+
+		$orFromQuery = implode("' OR fromWalletId = '", $addresses);
+		$orToQuery = implode("' OR toWalletId = '", $addresses);
+
+		$sql = "
+		SELECT *
+			FROM {$this->tableName}
+			WHERE fromWalletId = '$orFromQuery' OR toWalletId = '$orToQuery'
+			ORDER BY height DESC
+			LIMIT $from, $size;
+		";
+
+		//echo $sql . PHP_EOL;
+
+		$transfersResult = $this->query($sql);
+
+		$transfers = [];
+
+		if (!empty($transfersResult)) {
+			foreach($transfersResult as $transfer) {
+				$transfers[] = $transfer;
+			}
+		}
+
+		return $transfers;
 	}
 
 	/**
@@ -120,7 +164,7 @@ class MessageManager extends AbstractManager
 	 *
 	 * @return     int
 	 */
-	protected function insert(array $data): int
+	public function insert(array $data): int
 	{
 		return parent::insert($data);
 	}

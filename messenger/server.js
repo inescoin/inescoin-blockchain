@@ -1,6 +1,6 @@
 const app = require('express')();
 const server = require('http').createServer(app);
-const io = require('socket.io').listen(server);
+const io = require('socket.io')(server);
 const ent = require('ent');
 const _ = require('lodash');
 const http = require('http');
@@ -13,25 +13,29 @@ let cache = {};
 require('./logger.js');
 var logSystem = 'messenger';
 
+
 let threadId = '(Thread ' + process.env.forkId + ') ';
 let log = function(severity, system, text, data){
     global.log(severity, system, threadId + text, data);
 };
 
-let isTest = false;
+let isTest = true;
 let port = 8087;
 let hostName = isTest ? 'localhost:' + port : 'node.inescoin.org';
-let pathURI = '/messages/?addresses=';
+let pathURI = '/messages?walletAddresses=';
 
 let apiURL = (isTest ? 'http://' : 'https://') + hostName + pathURI;
 
 log('info', logSystem, 'Server started');
 
 io.sockets.on('connection', function (socket) {
-	log('info', logSystem, 'Connexion');
+	log('info', logSystem, 'Api: ' + apiURL + ' | Users: ' + Object.keys(cache).length);
 
   socket.on('authentication', function (response) {
+
+			console.log(response);
 			log('info', logSystem, 'Authentication: ' + response.address);
+
       socket.user = md5(response.address);
       socket.address = response.address;
 
@@ -42,7 +46,7 @@ io.sockets.on('connection', function (socket) {
       	return;
       }
 
-      setInterval(() => {
+      const refreshIntervalId = setInterval(() => {
 				if (!socket.user) {
 					console.log('user not found');
 					return;
@@ -56,11 +60,15 @@ io.sockets.on('connection', function (socket) {
 					log('info', logSystem, 'Send data: ' + socket.user);
 					console.log(apiURL + response.address);
 
+					console.log('STATUS: ' + resp.statusCode);
+				  console.log('HEADERS: ' + JSON.stringify(resp.headers));
+				  resp.setEncoding('utf8');
+
 					let data = '';
 
 					resp.on('data', (chunk) => {
 						data += chunk;
-						log('info', logSystem, 'data: ' + chunk);
+						// log('info', logSystem, 'data: ' + chunk);
 					});
 
 					resp.on('end', () => {
@@ -88,20 +96,23 @@ io.sockets.on('connection', function (socket) {
 									hash: final.messages[i].hash
 								});
 
-								if (!message) {
+								// if (!message) {
 									cache[socket.user].push(final.messages[i]);
 									socket.broadcast.emit('new-message', final.messages[i]);
+									console.log(final.messages[i]);
 									finalFound++;
 
 									log('info', logSystem, 'User: ' + socket.user + ' | Pos: ' + i + ' | Found: ' + final.messages.length + ' | Final: ' + finalFound + ' | Total: ' + cache[socket.user].length);
-								}
+								// }
 							}
-						} catch(e) {}
+						} catch(e) {
+							clearInterval(refreshIntervalId);
+						}
 					});
 				}).on("error", (err) => {
 					log('error', logSystem, err.message);
 				});
-			}, 4 * 1000);
+			}, 5 * 1000);
   });
 
   socket.on('disconnect', function () {

@@ -43,6 +43,8 @@ class BlockHelper
         $addressBalanceFrom = [];
         $finalHolders = [BlockchainConfig::NAME];
 
+
+
         $wallets = [];
 
         $walletBank = $blockchainManager->getBank()->getAddressBalances([BlockchainConfig::NAME]);
@@ -72,6 +74,7 @@ class BlockHelper
         }
 
         foreach ($blocks as $block) {
+
             if ($block instanceof Block) {
                 $blockModel =  new BlockModel($block->getDataAsArray());
             } elseif ($block instanceof BlockModel) {
@@ -89,8 +92,9 @@ class BlockHelper
                 }
 
                 if (!$previousBlock->isNextValid($blockModel)) {
+                    var_dump('[BlockHelper] [extractBlock] $previousBlock->isNextValid');
                     $logger->error('[BlockHelper] [extractBlock] $previousBlock->isNextValid');
-                    continue;
+                    return 0;
                 }
             }
 
@@ -109,6 +113,8 @@ class BlockHelper
             $minerAddress = '';
             $totalBlockAmount = 0;
             $totalBlockTransactions = count($transactions);
+
+            $txToDelete = [];
 
             $minerTransaction = [];
             $minerTransfer = [];
@@ -222,6 +228,10 @@ class BlockHelper
             }
 
             foreach ($transactions as $transaction) {
+                if (!in_array($transaction['hash'], $txToDelete)) {
+                    $txToDelete[] = $transaction['hash'];
+                }
+
                 $addressFrom = $transactionsList[$transaction['hash']]['fromWalletId'];
 
                 if (!isset($wallets[$addressFrom]) || $wallets[$addressFrom]['amount'] <= 0 && BlockchainConfig::NAME !== $addressFrom) {
@@ -392,7 +402,7 @@ class BlockHelper
                         }
                     }
                 } else {
-                    $logger->error("[BlockHelper] [extractBlock] Invalid amount spent: address => " . $addressFrom . " | amount => " . $transaction['amount'] . " | Height => " . $block['height']);
+                    $logger->error("[BlockHelper] [extractBlock] Invalid amount spent: address => " . $addressFrom . " | amount => " . $transaction['amount'] . " | Height => " . $block->getHeight());
                 }
             }
 
@@ -403,6 +413,8 @@ class BlockHelper
             } else {
                 $blocksToSave[] = $block;
             }
+
+            $blockchainManager->getTransactionPool()->deleteOldTransactions($txToDelete);
         }
 
         if (!empty($transactionsList)) {

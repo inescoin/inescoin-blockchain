@@ -6,6 +6,7 @@
 
 namespace Inescoin\RPC;
 
+use Inescoin\BlockchainConfig;
 use Inescoin\Helper\PKI;
 use Inescoin\Manager\BlockchainManager;
 use Inescoin\Node\Node;
@@ -104,24 +105,41 @@ final class RpcServer
                             'bankValid' =>  $this->blockchainManager->getBank()->isValid(),
                             'localPeerConfig' => $this->node->getLocalPeerConfig(),
                             'peersPersistence' => $this->node->getPeersPersistence(),
+                            'configHash' => BlockchainConfig::getHash(),
                             // 'isSync' => $this->node->getBlockchain()->isSync(),
                             // 'peers' => $this->node->getPeers(),
                         ];
 
                         $this->cache->setCache($key, $response);
+
                         return new JsonResponse($response);
 
-                    // case 'messages':
-                    //     $response = $this->cache->getCache($key);
-                    //     if ($response) {
-                    //         return new JsonResponse($response);
-                    //     }
+                    case 'messages':
+                        $walletAddresses = isset($params['walletAddresses']) ? $params['walletAddresses'] : null;
 
-                    //     $addresses = isset($params['addresses']) ? $params['addresses'] : null;
-                    //     $response = $this->node->getMessages($addresses);
+                        var_dump($walletAddresses);
 
-                    //     $this->cache->setCache($key, $response);
-                    //     return new JsonResponse($response);
+                        if (null === $walletAddresses || !ctype_alnum(str_replace(['x', ','], ['', ''], $walletAddresses))) {
+                            return new Response(404);
+                        }
+
+                        $addresses = explode(',', $walletAddresses);
+
+                        if (count($addresses) > 100) {
+                            return new JsonResponse([]);
+                        }
+
+                        $wallets = $this->cache->getCache($key);
+
+                        if ($wallets) {
+                            return new JsonResponse($wallets);
+                        }
+
+                        $response['messages'] = $this->blockchainManager->getMessage()->selectHistory($addresses);
+
+                        $this->cache->setCache($key, $response);
+
+                        return new JsonResponse($response);
 
                     case 'mempool':
                         $response = $this->cache->getCache($key);
@@ -493,8 +511,6 @@ final class RpcServer
 
                         $domains = $this->blockchainManager->getDomain()->rangeAsArray(0, 20, 'height', 'desc');
 
-                        var_dump($domains);
-
                         $this->cache->setCache($key, $domains);
 
                         return new JsonResponse($domains);
@@ -548,8 +564,8 @@ final class RpcServer
 
                         return new JsonResponse([$response]);
 
-                    // case 'message':
-                    //     return new JsonResponse([$this->node->checkFromMessagePool($data)]);
+                    case 'message':
+                        return new JsonResponse([$this->node->checkFromMessagePool($data)]);
 
                     case 'transaction':
                         return new JsonResponse([$this->node->checkFromMemoryPool($data)]);

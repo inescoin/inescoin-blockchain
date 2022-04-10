@@ -8,6 +8,7 @@ use React\Socket\ConnectionInterface;
 use JsonSerializable;
 
 final class Peer implements JsonSerializable {
+
 	private $connection;
 
     private $publicKey = null;
@@ -17,6 +18,8 @@ final class Peer implements JsonSerializable {
     private $topHeight = 1;
 
     private $localConfig = [];
+
+    private $data = [];
 
     public function __construct(ConnectionInterface $connection)
     {
@@ -112,5 +115,25 @@ final class Peer implements JsonSerializable {
 
     public function getLocalConfig() {
         return $this->localConfig;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getData()
+    {
+        return $this->data;
+    }
+
+    /**
+     * @param mixed $data
+     *
+     * @return self
+     */
+    public function setData($data)
+    {
+        $this->data = $data;
+
+        return $this;
     }
 }

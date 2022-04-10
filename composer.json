@@ -1,5 +1,5 @@
 {
-    "name": "root/opt",
+    "name": "inescoin/inescoin-blockchain",
     "type": "project",
     "license": "MIT",
     "autoload": {
