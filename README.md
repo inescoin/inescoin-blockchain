@@ -1099,102 +1099,39 @@ For any reason you can reset or cut your blockchain from height (0 for all)
 
 **[Back to top](#Get-started)**
 
-# Docker dev env
+# Docker dev env local install (if you want to create your own blockchain)
 
   1. Create inescoin folder
   ```
     mkdir inescoin && cd inescoin
   ```
 
-  2. Clone projects
+  2. Clone inescoin-blockchain project
   ```
     git clone git@github.com:inescoin/inescoin-blockchain.git
-    git clone git@github.com:inescoin/inescoin-wallet.git
-    git clone git@github.com:inescoin/inescoin-explorer.git
-    git clone git@github.com:inescoin/inescoin-website-viewer.git
 
   ```
 
-  4. Build & start containers
+  4. Install ans builds all with Makefile
   ```
-    cd ./inescoin-blocchain
-    docker-compose up
-  ```
-
-  5. Run inescoin-node container
-  ```
-    docker exec -it inescoin-node bash
-
-    # root@inescoin-node:/#
-    cd /opt/
-    composer install
+    make install
   ```
 
-  6. Replace elasticsearch localhost by elasticsearch (container name)
+  5. Start miner into other terminal
   ```
-    sed -i 's/localhost/elasticsearch/g' /opt/src/core/ES/ESService.php
-  ```
-
-  7. Replace remote ip peer by 0.0.0.0
-  ```
-    sed -i 's/198\.199\.73\.197/0\.0\.0\.0/g' /opt/src/bin/inescoin-node
+    make start-miner
   ```
 
-  8. Start inescoin-node daemon
+  6. Start local wallet
   ```
-    cd /opt/
-    src/bin/inescoin-node --rpc-bind-port=8087 --p2p-bind-port=3031 --network=MAINNET --prefix=moon
+    cd ../inescoin-wallet
+
+    // Node >= 12
+    npm i && npm start
+
   ```
 
-  9. Start inescoin-sync (inescoin-node container)
-  ```
-    cd /opt/src/
-    ./bin/inescoin-sync --prefix=moon
-  ```
-
-  10. Start inescoin-consumer (inescoin-node container)
-  ```
-    cd /opt/src/
-    ./bin/inescoin-consumer --prefix=moon
-  ```
-
-  11. Start miner into other terminal
-  ```
-    docker exec -it inescoin-node bash
-
-    # root@inescoin-node:/#
-    cd /opt/src/
-    bin/inescoin-miner --wallet-address=0x5967a4016501465CD951a1e3984F772AfDeB5207 --rpc-port=8087 --rpc-ip=0.0.0.0
-  ```
-
-  12. Run inescoin explorer http://localhost:8000
-  ```
-    docker exec -it inescoin-explorer-phpfpm bash
-
-    # root@phpfpm:/#
-    cd /www/
-    composer install
-  ```
-
-    11. Run inescoin website viewer http://localhost:8001
-  ```
-    docker exec -it inescoin-website-viewer-phpfpm bash
-
-    # root@phpfpm:/#
-    cd /www/
-    composer install
-  ```
-
-  13. Replace remote node ip by inescoin-node (container name)
-  ```
-    sed -i 's#https:\/\/node.inescoin.org\/#http:\/\/inescoin-node:8087\/#g' /www/src/app/App.php
-  ```
-
-  14. Kibana
-  ```
-    Open in browser: http://localhost:5608/
-  ```
-
+    Et voila !
 
 **[Back to top](#Get-started)**
 
