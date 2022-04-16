@@ -58,7 +58,7 @@ if ($helpMe) {
 
 $peersConfig = [
 	[
-		'host' => '0.0.0.0',
+		'host' => '37.187.115.92',
 		'port' => 3030
 	],
 ];
