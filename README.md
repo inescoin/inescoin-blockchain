@@ -1112,7 +1112,7 @@ For any reason you can reset or cut your blockchain from height (0 for all)
 
   ```
 
-  4. Install ans builds all with Makefile
+  4. Install and builds all with Makefile
   ```
     make install
   ```
