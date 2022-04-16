@@ -9,7 +9,7 @@ install:				#~ Install Inescoin dev projects
 install: clone build start-node
 
 dev:					#~ Start to dev quickly
-dev: stop start start-node
+dev: start start-node
 
 clone:				   	#~ Clone all repositories
 	[ ! -d '../inescoin-wallet' ] && git clone git@github.com:inescoin/inescoin-wallet ../inescoin-wallet || true
@@ -34,6 +34,7 @@ build: clone
 	docker exec -it inescoin-website-viewer-phpfpm bash -c "cd /www/ && composer update"
 
 start:                 	#~ Start the docker containers
+start: stop
 	docker-compose up -d --remove-orphans
 
 stop:                  	#~ Stop the docker containers

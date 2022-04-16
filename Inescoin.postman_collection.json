@@ -1,0 +1,394 @@
+{
+	"info": {
+		"_postman_id": "31c3c4f4-2663-420c-bcff-0a95de8d2e52",
+		"name": "Inescoin",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "messages",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{host}}/messages?walletAddresses=0x3239E215BdF7176C0645bE6693244368Fa6EbE0e,0x3239E215BdF7176C0645bE6693244368Fa6EbE0e",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"messages"
+					],
+					"query": [
+						{
+							"key": "walletAddresses",
+							"value": "0x3239E215BdF7176C0645bE6693244368Fa6EbE0e,0x3239E215BdF7176C0645bE6693244368Fa6EbE0e"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get-last-domains",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}/get-last-domains",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"get-last-domains"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get-blocks-by-height",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    //\"height\": 200\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}/get-blocks-by-height",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"get-blocks-by-height"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get-block-by-height",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"blockHeight\": 1212\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}/get-block-by-height",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"get-block-by-height"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get-block-by-hash",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"blockHash\": \"00de430ca8fb2c29b1e6fc108aef75e57d4f751bdfb2cab0de3d28ccebb4c6fe\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}/get-block-by-hash",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"get-block-by-hash"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get-transaction-by-hash",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"transactionHash\": \"b8427368f1c53d29d8ab8af1049e5733fd704c0bfe806e19c52da43953a78636\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}/get-transaction-by-hash",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"get-transaction-by-hash"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get-transfer-by-hash",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"transferHash\": \"d6eb9cc52a94508fa1a6f016b06a308efdeb8c63f9652983306cc9820e112242\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}/get-transfer-by-hash",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"get-transfer-by-hash"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get-wallet-addresses-infos",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"walletAddresses\":\"0x00C6C990EEEa72d5DA5FE88C9937CDfbcA66a620,0xb97D09b2F5C2B09bB9F946Fbd403aD3c4bB350Bd,0x426Ec9F17ae8Ed006548b2C15d6E8E0B0576F2a4,0x36c66bC58BF277446ec6343AB926B473ABF93413,0x3239E215BdF7176C0645bE6693244368Fa6EbE0e\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}/get-wallet-addresses-infos",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"get-wallet-addresses-infos"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get-wallet-address-transfers",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"walletAddress\": \"0x36c66bC58BF277446ec6343AB926B473ABF93413\",\n    \"page\": 1\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}/get-wallet-address-infos",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"get-wallet-address-infos"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get-wallet-addresses-domain",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"walletAddresses\":\"0x00C6C990EEEa72d5DA5FE88C9937CDfbcA66a620,0xb97D09b2F5C2B09bB9F946Fbd403aD3c4bB350Bd,0x426Ec9F17ae8Ed006548b2C15d6E8E0B0576F2a4,0x36c66bC58BF277446ec6343AB926B473ABF93413,0x3239E215BdF7176C0645bE6693244368Fa6EbE0e\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}/get-wallet-addresses-domain",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"get-wallet-addresses-domain"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get-domain-url",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"url\": \"inescoin\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}/get-domain-url",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"get-domain-url"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "top-block",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{host}}/top-block",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"top-block"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "top-height",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{host}}/top-height",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"top-height"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "status",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{host}}/status",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"status"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "public-key",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{host}}/public-key",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"public-key"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "generate-keys",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{host}}/generate-keys",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"generate-keys"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "mempool",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{host}}/mempool",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"mempool"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
