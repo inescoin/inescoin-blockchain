@@ -21,13 +21,11 @@ clone:				   	#~ Clone all repositories
 
 ifeq ($(UNAME_SYSTEM),Darwin)
 	sed -i '' -e 's#https:\/\/node.inescoin.org\/#http:\/\/inescoin-node:8087\/#g' "../inescoin-explorer/src/app/App.php" #~ Replaced for dev env (never push it)
-else
-	sed -i 's#https:\/\/node.inescoin.org\/#http:\/\/inescoin-node:8087\/#g' "../inescoin-explorer/src/app/App.php" #~ Replaced for dev env (never push it)
-endif
-
-ifeq ($(UNAME_SYSTEM),Darwin)
+	sed -i '' -e 's#https:\/\/node.inescoin.org\/#http:\/\/inescoin-node:8087\/#g' "../inescoin-website-viewer/src/app/App.php" #~ Replaced for dev env (never push it)
 	sed -i '' -e 's/37\.187\.115\.92/0\.0\.0\.0/g' "./bin/inescoin-node" #~ Replaced for dev env (never push it)
 else
+	sed -i 's#https:\/\/node.inescoin.org\/#http:\/\/inescoin-node:8087\/#g' "../inescoin-explorer/src/app/App.php" #~ Replaced for dev env (never push it)
+	sed -i 's#https:\/\/node.inescoin.org\/#http:\/\/inescoin-node:8087\/#g' "../inescoin-website-viewer/src/app/App.php" #~ Replaced for dev env (never push it)
 	sed -i 's/37\.187\.115\.92/0\.0\.0\.0/g' "./bin/inescoin-node" #~ Replaced for dev env (never push it)
 endif
 
