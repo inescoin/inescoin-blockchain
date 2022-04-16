@@ -1114,7 +1114,7 @@ For any reason you can reset or cut your blockchain from height (0 for all)
 
   4. Install and builds all with Makefile
   ```
-    make install
+    cd ./inescoin-blockchain && make install
   ```
 
   5. Start miner into other terminal
