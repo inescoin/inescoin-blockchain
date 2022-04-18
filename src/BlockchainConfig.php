@@ -34,17 +34,17 @@ class BlockchainConfig {
 
     const DIFFICULTY_TARGET = 3;
 
-    const BLOCK_TARGET = 3;
+    const BLOCK_TARGET = 30;
 
     const SYMBOL = 'ines';
 
     const VERSION = '2.0';
 
-	const MIN_DIFFICULTY = 1;
+	const MIN_DIFFICULTY = 20;
 
 	const NEXT_TIMESTAMP = 2;
 
-	const NEXT_EMPTY_TIMESTAMP = 2;
+	const NEXT_EMPTY_TIMESTAMP = 3600;
 
 	const WEB_COST_UNIT_BLOCKS = 10000;
 
