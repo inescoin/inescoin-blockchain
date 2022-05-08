@@ -705,7 +705,7 @@ class P2PServer {
     {
         var_dump('---------------- handleBroadcastTopBlockResponse ---------------------');
 
-        // $remoteAddress = $connection->getRemoteAddress();
+        $remoteAddress = $connection->getRemoteAddress();
 
         if (isset($this->peersOutputStream[$remoteAddress]) && !empty($this->peersOutputStream[$remoteAddress])) {
             $this->write($connection, Packet::BROADCAST_TOP_BLOCK, []);
