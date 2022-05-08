@@ -351,12 +351,14 @@ class P2PServer {
         // $connection->close();
         if (!isset($this->peers[$remoteAddress])) {
             var_dump('P2pServer::handlePeerListResponse -> error -> peers [' . $remoteAddress . '] not isset');
+            $connection->close();
             return;
         }
 
-        if (isset($this->peersOutputStream[$remoteAddress]) && !empty($this->peersOutputStream[$remoteAddress])) {
+        if (!isset($this->peersOutputStream[$remoteAddress])) {
             var_dump('P2pServer::handlePeerListResponse -> error -> peersOutputStream [' . $remoteAddress . '] not isset');
             $this->write($connection, Packet::REQUEST_PEERS_RESPONSE, []);
+            $connection->close();
             return;
         }
 
