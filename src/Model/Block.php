@@ -160,7 +160,7 @@ class Block
 
                 $transaction['toDo'] = is_array($transaction['toDo'])
                     ? $transaction['toDo']
-                    : json_decode(base64_decode($transaction['toDo']), true);
+                    : @json_decode(preg_replace('/[\x00-\x1F\x80-\xFF]/', '', rawurldecode(base64_decode($transaction['toDo']))), true);
 
                 if (null !== $transaction['toDo']) {
                     foreach ($transaction['toDo'] as $pos => $toDo) {

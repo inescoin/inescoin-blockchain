@@ -69,7 +69,7 @@ class Transaction {
 
     public function getTodoJson()
     {
-        return json_decode(base64_decode($this->getToDo(), true));
+        return  json_decode(preg_replace('/[\x00-\x1F\x80-\xFF]/', '', rawurldecode(base64_decode($this->getToDo()))), true);
     }
 
     public function addToDo($toDo)
@@ -329,12 +329,13 @@ class Transaction {
 		$isWeb = false;
 
 		if (!empty($this->toDo) && $this->toDo !== 'W10=') {
-			$_todo = is_array($this->toDo)
-				? $this->toDo
-				: @json_decode(base64_decode($this->toDo), true);
+			$_todo = is_string($this->toDo)
+				? @json_decode(preg_replace('/[\x00-\x1F\x80-\xFF]/', '', rawurldecode(base64_decode($this->toDo))), true)
+				: $this->toDo;
 
 			if (!$_todo) {
 				var_dump('[Transaction] [Todo] ERROR: Bad todo format');
+				var_dump($this->toDo);
 				return false;
 			}
 

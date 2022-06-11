@@ -313,8 +313,14 @@ class BlockchainService {
             ];
         }
 
-        $todo = @json_decode(base64_decode($data['toDo']), true);
+
+        $todo = @json_decode(
+            preg_replace('/[\x00-\x1F\x80-\xFF]/', '', rawurldecode(base64_decode($data['toDo']))),
+            true
+        );
+
         $isWeb = false;
+
         if ($todo && !empty($todo)) {
             $_todo = $todo[0];
             $action = $_todo['action'];
@@ -478,7 +484,6 @@ class BlockchainService {
     public function pushMessage($data)
     {
         $data = (array) $data;
-        var_dump($data);
 
         $wallet = $this->blockchainManager->getBank()->getAddressBalances([$data['fromWalletId'], $data['toWalletId']]);
 
@@ -498,7 +503,6 @@ class BlockchainService {
         $message->setData($data);
 
         $messagePoolExists = $this->blockchainManager->getMessage()->exists($message->getMessage(), 'hash');
-        var_dump($messagePoolExists);
 
         if ($messagePoolExists) {
             return false;
@@ -506,13 +510,10 @@ class BlockchainService {
 
         $mMessage = $message->getInfos();
 
-        var_dump($message->isValid());
         if ($message->isValid()) {
             $mMessage = $message->getInfos();
             $mMessage['hash'] = $message->getMessage();
             $this->blockchainManager->getMessage()->insert($mMessage);
-
-            var_dump($message->getInfos());
 
             return $message->getInfos();
         }
