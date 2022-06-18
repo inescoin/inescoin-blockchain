@@ -477,6 +477,8 @@ class BlockchainService {
             $this->lastTransactionPool = time();
         }
 
+        $this->logger->info('[BlockchainService] New transaction for MemoryPool: ' . $mTransaction['hash']);
+
         return $mTransaction;
     }
 

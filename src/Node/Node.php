@@ -68,7 +68,12 @@ final class Node {
     }
 
     public function checkFromMemoryPool($data) {
+        $this->logger->info('[Node] [pushMemoryPool] checkFromMemoryPool start...');
+
         $response = $this->_checkFrom($data);
+
+        $this->logger->info('[Node] [pushMemoryPool] checkFromMemoryPool process...');
+
         if (empty($data)) {
             return [
                 'error' => 'Data is empty',
