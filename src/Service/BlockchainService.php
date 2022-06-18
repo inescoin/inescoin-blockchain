@@ -313,9 +313,8 @@ class BlockchainService {
             ];
         }
 
-
         $todo = @json_decode(
-            preg_replace('/[\x00-\x1F\x80-\xFF]/', '', rawurldecode(base64_decode($data['toDo']))),
+            rawurldecode(base64_decode($data['toDo'])),
             true
         );
 

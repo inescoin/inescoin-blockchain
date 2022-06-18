@@ -69,7 +69,7 @@ class Transaction {
 
     public function getTodoJson()
     {
-        return  json_decode(preg_replace('/[\x00-\x1F\x80-\xFF]/', '', rawurldecode(base64_decode($this->getToDo()))), true);
+        return  @json_decode(rawurldecode(base64_decode($this->getToDo())), true);
     }
 
     public function addToDo($toDo)
@@ -330,7 +330,7 @@ class Transaction {
 
 		if (!empty($this->toDo) && $this->toDo !== 'W10=') {
 			$_todo = is_string($this->toDo)
-				? @json_decode(preg_replace('/[\x00-\x1F\x80-\xFF]/', '', rawurldecode(base64_decode($this->toDo))), true)
+				? @json_decode(rawurldecode(base64_decode($this->toDo)), true)
 				: $this->toDo;
 
 			if (!$_todo) {
